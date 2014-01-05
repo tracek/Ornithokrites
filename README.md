@@ -15,8 +15,8 @@ What's in:
 3. Segmentation of audio track into short audio features (non-noise) and silence
    periods (noise).
 4. Removal of noise through spectral subtraction. This step produces so-called 
-   "musical tones": tin-like sound all over the sample. There is ongoing effort 
-   on making the algorithm smarter. 
+   "musical tones": tin-like sound all over the sample. There is an ongoing effort 
+   to make the algorithm smarter. 
 5. Saving 'audio features' and spectrograms together with input data.
 
 
