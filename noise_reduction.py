@@ -1,14 +1,22 @@
-from scipy.signal import firwin, butter, lfilter, kaiserord, wiener, medfilt
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Dec  1 20:31:22 2013
+
+@author: Lukasz Tracewski
+
+Various filters
+"""
+
+from scipy.signal import firwin, butter, lfilter, kaiserord, wiener
 import numpy as np
 
-def median_filter(signal, length):
-    return medfilt(signal, length)
-
 def wiener_filter(signal):
-    output = wiener(signal, 2**5 - 1, 0.9)
+    """ Wiener filter. """
+    output = wiener(signal, 2**5 - 1)
     return output
 
 def remove_clicks(signal, rate, periodicity):
+    """ Clicks are short bursts of energy. """
     energy = calculate_energy(signal, periodicity)
     output = signal
     std = np.std(energy)
@@ -20,6 +28,7 @@ def remove_clicks(signal, rate, periodicity):
     return output
     
 def calculate_energy(signal, period, overlap = 0):
+    """ Calculate energy of the signal. """
     intervals = np.arange(0, len(signal), period)
     energy = np.zeros(len(intervals) - 1)
     for i in np.arange(len(intervals) - 1):
@@ -28,15 +37,18 @@ def calculate_energy(signal, period, overlap = 0):
     return energy    
 
 def highpass_filter(signal, rate, cut):
+    """ Apply highpass filter. Everything below 'cut' frequency level will
+        be greatly reduced. """
     ntaps = 199
     nyq = 0.5 * rate
     highpass = firwin(ntaps, cut, nyq=nyq, pass_zero=False,
                         window='hann', scale=False)
-    # highpass[ntaps/2] = highpass[ntaps/2] + 1
     filteredSignal = lfilter(highpass, 1.0, signal)
     return filteredSignal    
 
 def bandpass_filter(signal, signal_rate, lowcut, highcut, window='hann'):
+    """ Apply bandpass filter. Everything below 'lowcut' and above 'highcut' 
+        frequency level will be greatly reduced. """    
     ntaps = 199
     nyq = 0.5 * signal_rate
     lowpass = firwin(ntaps, lowcut, nyq=nyq, pass_zero=False,
@@ -49,7 +61,9 @@ def bandpass_filter(signal, signal_rate, lowcut, highcut, window='hann'):
     filteredSignal = lfilter(bandpass, 1.0, signal)
     return filteredSignal
 
-def keiser_bandpass_filter(signal, signal_rate, lowcut, highcut):   
+def keiser_bandpass_filter(signal, signal_rate, lowcut, highcut):
+    """ Apply bandpass filter. Everything below 'lowcut' and above 'highcut' 
+        frequency level will be greatly reduced. Keiser edition. """     
     # The Nyquist rate of the signal.
     nyq_rate = 0.5 * signal_rate
     
@@ -70,20 +84,22 @@ def keiser_bandpass_filter(signal, signal_rate, lowcut, highcut):
     # Use lfilter to filter x with the FIR filter.
     filteredSignal = lfilter(bandpass, 1.0, signal)
     return filteredSignal
-    
-def butter_bandpass(lowcut, highcut, fs, order=5):
+        
+def _butter_bandpass(lowcut, highcut, fs, order=5):      
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
     b, a = butter(order, [low, high], btype='band')
     return b, a
-
-
+    
 def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    """ Apply _bandpass filter. Everything below 'lowcut' and above 'highcut' 
+        frequency level will be greatly reduced. Butter edition. """       
+    b, a = _butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
-    
+
 def moving_average(signal, length):
+    """ Moving average filter. """
     smoothed = np.convolve(signal, np.ones(length)/length, mode='same')
     return smoothed

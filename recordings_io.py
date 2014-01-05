@@ -2,7 +2,9 @@
 """
 Created on Sun Dec  1 21:33:27 2013
 
-@author: tracek
+@author: Lukasz Tracewski
+
+
 """
 from __future__ import division
 
@@ -12,9 +14,10 @@ import nose.tools as nt
 import scipy.io.wavfile as wav
 
 def read(path):
+    """ Read wave file from the given path """
     (rate, sample) = wav.read(path)
     sample = sample.astype('float32')
-#    sample /= np.max(np.abs(sample),axis=0) # Normalize sample
+    sample /= np.max(np.abs(sample),axis=0) # Normalize sample
     return rate, sample
 
 def write(path, rate, sample, dB=30.0, output_dir="", segments=[]):
@@ -80,12 +83,29 @@ class Walker(object):
         nt.assert_true(self._recordings, "No recordings found!")
         
     def read_wave(self):
-        """ Returns generator that reads wave files """
+        """ 
+        Generator for reading of wave files.
+        Generators are iterators, but you can only iterate over them once.
+        It's because they do not store all the values in memory, 
+        they generate the values on the fly. It means that all wave files will
+        not be read at once, but on as-required basis.
+        
+        Parameters
+        ----------
+        None
+            
+        Returns
+        -------
+        samplerate : int
+            Rate of the sample in Hz
+        sample : 1-d array
+            Wave file read as numpy array of int16
+        name : string
+            Name of a wave file
+        """    
         for name in self._recordings:
             (samplerate, sample) = wav.read(name)
             yield samplerate, sample, name
-#        
-#        return ([name, wav.read(name)] for name in self._recordings)
         
     def get_recordings_list(self):
         """ Returns list of all recordings """
@@ -96,11 +116,8 @@ class Walker(object):
         return len(self._recordings)
 
 
+""" Test """
 if __name__ == '__main__':
     recordings_walker = Walker("./Recordings")    
-    print recordings_walker.count()    
-
-    path_recording = '/home/tracek/Ptaszki/Recordings/female/RFPT-LPA-20111126214502-240-60-KR6.wav'
-    (rate, sample) = read_normalized(path_recording)
-    write(path_recording, rate, sample, './out')
+    print recordings_walker.count()
     
