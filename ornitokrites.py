@@ -10,6 +10,7 @@ Main module.
 Identification of kiwi calls from audio recordings - main module.
 """
 
+import sys
 import matplotlib.pyplot as plt
 import noise_reduction as nr
 import recordings_io
@@ -17,11 +18,17 @@ import voice_enhancement as ve
 import s3connection as s3
 from segmentation import Segmentator
 
+#
+if (len(sys.argv) != 2):
+    print "Incorrect syntax\nUsage: " + sys.argv[0] + " [kiwi bucket]"
+    print "Example: " + sys.argv[0] + " kiwicalldata"
+    sys.exit(1)
+
 # Here all recordings will be stored
 data_store = './Recordings/'
 
 # Download recordings from a bucket
-s3.read_data(output_recordings_dir=data_store)
+s3.read_data(bucket_name=sys.argv[1], output_recordings_dir=data_store)
 
 # Generator; it will take recursively all .wav files from given directory
 walker = recordings_io.Walker(data_store)
