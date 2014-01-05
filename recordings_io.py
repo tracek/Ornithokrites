@@ -4,7 +4,7 @@ Created on Sun Dec  1 21:33:27 2013
 
 @author: Lukasz Tracewski
 
-
+Module for handling input and output
 """
 from __future__ import division
 

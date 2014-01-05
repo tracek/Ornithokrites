@@ -1,5 +1,12 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Dec  5 10:25:53 2013
+
+@author: Lukasz Tracewski
+
+Various spectral subtraction methods. Under heavy development.
+"""
+
 import scipy as sp
 import scipy.special as spc
 import scipy.signal as sig
