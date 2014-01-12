@@ -9,6 +9,7 @@ Module for getting data from given S3 bucket.
 
 import os
 import sys
+import logging
 import boto
 
 def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/'):
@@ -28,22 +29,22 @@ def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/')
     Nothing
     """        
     try:
-        print 'Connecting to S3 ...'
+        logging.info('Connecting to S3 ...<br/>')
         s3 = boto.connect_s3()
     except:
-        print 'Failure while connecting to S3. Check credentials.'
+	logging.critical('Failure while connecting to S3. Check credentials.<br/>')
         sys.exit(1)
     try:
-        print 'Connection established. Fetching bucket ...'
+        logging.info('Connection established. Fetching bucket %s...<br/>', bucket_name)
         bucket = s3.get_bucket(bucket_name)
     except:
-        print 'Failure while connecting to bucket. Check if bucket exists.'
+        logging.critical('Failure while connecting to bucket. Check if bucket exists.<br/>')
         sys.exit(1)    
     
-    print 'Bucket ready. Getting data ...'
+    logging.info('Bucket ready. Getting data ...<br/>')
     for key in bucket.list():
         if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-            print 'Downloading ' + key.name
+            logging.info('Downloading %s', key.name)
             path = os.path.join(output_recordings_dir, key.name)
             _make_sure_dir_exists(path)
             key.get_contents_to_filename(path)

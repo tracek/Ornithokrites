@@ -78,7 +78,7 @@ class Walker(object):
         """
         self._recordings = []
         for dirpath, dirnames, filenames in os.walk(recordings_location):
-            for filename in [f for f in filenames if f.endswith(".wav")]:
+            for filename in [f for f in filenames if f.endswith(".wav") and not f.endswith('_seg.wav')]:
                 self._recordings.append(os.path.join(dirpath, filename))
         nt.assert_true(self._recordings, "No recordings found!")
         

@@ -10,6 +10,9 @@ Main module.
 Identification of kiwi calls from audio recordings - main module.
 """
 
+import logging
+import matplotlib as mpl
+mpl.use('Agg')
 import sys
 import matplotlib.pyplot as plt
 import noise_reduction as nr
@@ -18,17 +21,23 @@ import voice_enhancement as ve
 import s3connection as s3
 from segmentation import Segmentator
 
-#
+logging.basicConfig(filename='/var/www/results/log.html', filemode='w', format='%(message)s <br/>', level=logging.INFO)
+logging.info('<!DOCTYPE html>')
+
+# Handle user input
+# First argument is used as S3 bucket name
+# If none specified then default is used - kiwicalldata
 if (len(sys.argv) != 2):
-    print "Incorrect syntax\nUsage: " + sys.argv[0] + " [kiwi bucket]"
-    print "Example: " + sys.argv[0] + " kiwicalldata"
-    sys.exit(1)
+    user_bucket = 'kiwicalldata'
+    logging.info('No argument specified. Default bucket %s used.<br/><hr><br>', user_bucket)
+else:
+    user_bucket = sys.argv[1]
 
 # Here all recordings will be stored
-data_store = './Recordings/'
+data_store = '/var/www/results/Recordings/'
 
 # Download recordings from a bucket
-s3.read_data(bucket_name=sys.argv[1], output_recordings_dir=data_store)
+# s3.read_data(bucket_name=user_bucket, output_recordings_dir=data_store)
 
 # Generator; it will take recursively all .wav files from given directory
 walker = recordings_io.Walker(data_store)
@@ -42,6 +51,8 @@ segmentator = Segmentator()
 
 # Read wave file on-the-fly (one at a time)
 for rate, sample, sample_name in walker.read_wave(): 
+    logging.info('<h2>%s</h2>', sample_name.replace('/var/www/results/Recordings',''))
+    
     # Apply highpass filter to greatly reduce signal strength below 1500 Hz.  
     sample_highpassed = nr.highpass_filter(sample, rate, 1500)
     
@@ -64,8 +75,11 @@ for rate, sample, sample_name in walker.read_wave():
     segmented_sounds = segmentator.get_segmented_sounds()
     
     # Write cleared audio features to a file
-    recordings_io.write(sample_name + '_seg.wav', rate, out_highpassed,
+    segmented_sample_name = sample_name + '_seg.wav'
+    recordings_io.write(segmented_sample_name, rate, out_highpassed,
                         segments=segmented_sounds)
+    logging.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
+                 segmented_sample_name.replace('/var/www/results/',''))
     
     # Plot spectrogram
     plt.specgram(out_highpassed, NFFT=2**11, Fs=rate)
@@ -76,9 +90,13 @@ for rate, sample, sample_name in walker.read_wave():
         plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2)
         plt.plot([end, end], [0, 4000], lw=1, c='g', alpha=0.4)
     plt.axis('tight')
-    plt.savefig(sample_name + '.png')
+    spectrogram_sample_name = sample_name + '.png'
+    plt.savefig(spectrogram_sample_name)
     plt.clf()
+    logging.info('<img src="%s" alt="Spectrogram">', spectrogram_sample_name.replace('/var/www/results/',''))
     
     # Update progress
     progress += 1 
-    print 'Processing %s %.1f%%' % (sample_name, 100.0 * progress / walker.count())   
+    logging.info('Completed %s ', sample_name)
+    logging.info('Progress: %.1f%%', 100.0 * progress / walker.count())
+    logging.info('<hr>')
