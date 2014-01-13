@@ -8,6 +8,7 @@ import pywt
 import numpy as np
 import yaafelib as yf
 import nose.tools as nt
+import csv
 
 import Tkinter, tkFileDialog
 root = Tkinter.Tk()
@@ -50,11 +51,24 @@ engine = yf.Engine()
 engine.load(fp.getDataFlow())    
 engine.reset() 
 
+f = open('feat.out', 'w')
+f2 = open('out.csv','wb')
+header_written = False
 sounds = []
 for start, end in segmentator.get_segmented_sounds():
     audio = out[start:end]
     feats = engine.processAudio(np.array([audio]))
+    f.write("\nstart: %i end: %i\n\n" % (start, end))
+    f.write("%s\n\n-------------------\n" % feats)
+    w = csv.DictWriter(f2, feats.keys())
+    if not header_written:    
+        w.writeheader()
+        header_written = True
+    w.writerow(feats)
     sounds.append(feats)
+    
+f.close()
+f2.close()
 
 plt.specgram(out, NFFT=2**11, Fs=rate)
 for start, end in segmented_sounds:
