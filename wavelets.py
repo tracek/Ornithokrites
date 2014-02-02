@@ -13,7 +13,7 @@ Features = namedtuple('Features', 'max_avr_energy position spread')
 
 class WaveletFeatures(object):
     
-    def __init__(self, wavelet_name='db10'):
+    def __init__(self, wavelet_name='sym10'):
         self._wavelet = pywt.Wavelet(wavelet_name)
         
     def decompose(self, data, level=6, mode='sym'):
@@ -70,13 +70,19 @@ class WaveletFeatures(object):
         
     def wavpack(self, data):
         packet = pywt.WaveletPacket(data, self._wavelet)
-        sixth = packet.get_level(6)
+        q = packet.get_level(6)
         
-        cutoff = 41
-        for i in np.arange(cutoff):
-            sixth[i].data = np.zeros(len(sixth[i].data))
-        for i in np.arange(cutoff, len(sixth)):
-            sixth[i].data = pywt.thresholding.soft(sixth[i].data, np.std(sixth[i].data))
+        l = len(q[0].data)
+        for i in np.arange(0, 12):
+            q[i].data = np.zeros(l)
+        for i in np.arange(12, 33):
+            q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))
+        for i in np.arange(33, 41):
+            q[i].data = np.zeros(l)
+        for i in np.arange(41, 48):
+            q[i].data = pywt.thresholding.soft(q[i].data, 3.5 * np.std(q[i].data)) 
+        for i in np.arange(48, 64):
+            q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))   
         
         reconstructed = packet.reconstruct()
         return reconstructed
@@ -104,19 +110,53 @@ if __name__ == '__main__':
     
     out = sample
 
+    wave_feat = WaveletFeatures()
+    packet = pywt.WaveletPacket(sample_highpassed, 'sym10')
+    q = packet.get_level(6)
+
+    packet2 = pywt.WaveletPacket(sample_highpassed, 'sym10')
+    q2 = packet2.get_level(6)
+    
+    l = len(q[0].data)
+    for i in np.arange(0, 12):
+        q[i].data = np.zeros(l)
+    for i in np.arange(12, 33):
+        q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))
+    for i in np.arange(33, 41):
+        q[i].data = np.zeros(l)
+    for i in np.arange(41, 48):
+        q[i].data = pywt.thresholding.soft(q[i].data, 3.5 * np.std(q[i].data)) 
+    for i in np.arange(48, 64):
+        q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))           
+        
+    plt.figure(figsize=(20,100))
+    for i in np.arange(64):
+        plt.subplot(11,6,i+1)
+        plt.plot(q[i].data)
+        plt.title(i)
+
+    a = packet.reconstruct()
+    plt.subplot(11,6,65)
+    plt.plot(a)
+    
     try:
         noise = segmentator.get_next_silence(sample)
         out = ve.reduce_noise(sample, noise, 0)
         noise = segmentator.get_next_silence(sample)
         out = ve.reduce_noise(out, noise, 0)
     except KeyError, e:
-        print e
+        print 'Recovery'
+#        v = wave_feat.wavpack(sample_highpassed)        
+#        mfc_seg = segmentation.Segmentator(detector_type='mkl', threshold=0.3)
+#        mfc_seg.process(v, rate)
+#        noise = mfc_seg.get_next_silence(out)
+#        out = ve.reduce_noise(out, noise, 0)        
 #    
     out = nr.highpass_filter(out, rate, 1200) 
     
 #    recordings_io.write('out' + '_seg.wav', rate, out, segments=segmented_sounds)
 #    
-    wave_feat = WaveletFeatures()
+
 #    features = []
 #    coeffs = []
 #
@@ -129,19 +169,20 @@ if __name__ == '__main__':
 #    co = np.array(coeffs)
 #    del coeffs
     
-    out2 = wave_feat.wavpack(out)
-    
-    plt.subplot(311)    
+#    out2 = wave_feat.wavpack(out)
+       
+    plt.subplot(11,6,66)
     plt.specgram(out, NFFT=2**11, Fs=rate)
     # and mark on it with vertical lines found audio features
     for start, end in segmented_sounds:
         start /= rate
         end /= rate
-        plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2)
+        plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2, ls='dashed')
         plt.plot([end, end], [0, 4000], lw=1, c='g', alpha=0.4)
     plt.axis('tight')    
-    plt.subplot(312)
-    plt.plot(out2)
-    plt.subplot(313)
-    plt.plot(out)
+    plt.show()
+#    plt.subplot(312)
+#    plt.plot(out)
+#    plt.subplot(313)
+#    plt.plot(sample)
     plt.show()
