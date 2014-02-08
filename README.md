@@ -1,4 +1,4 @@
-Ornitokrites
+Ornithokrites
 ============
 Software for automatic identification of kiwi calls from audio recordings. Pre-alpha, not feature complete.
 
