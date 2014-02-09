@@ -5,7 +5,6 @@ Created on Mon Dec 02 12:07:49 2013
 @author: ltracews
 """
 
-from collections import namedtuple
 import numpy as np
 import pywt
 
@@ -80,7 +79,7 @@ class Wavelets(object):
         wavelet_coefficients = self.decompose_wavpack(data)
         return self.calculate_features(wavelet_coefficients), wavelet_coefficients
         
-    def wavpack(self, data):
+    def denoise(self, data):
         packet = pywt.WaveletPacket(data, self._wavelet)
         q = packet.get_level(6)
         
@@ -89,9 +88,9 @@ class Wavelets(object):
             q[i].data = np.zeros(l)
         for i in np.arange(16, 32):
             q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))
-        for i in np.arange(32, 47):
+        for i in np.arange(32, 42):
             q[i].data = np.zeros(l)
-        for i in np.arange(47, 64):
+        for i in np.arange(42, 64):
             q[i].data = pywt.thresholding.soft(q[i].data, np.std(q[i].data))   
         
         reconstructed = packet.reconstruct()
