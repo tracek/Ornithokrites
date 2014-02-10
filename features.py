@@ -13,12 +13,8 @@ import yaafelib
 import wavelets
 
 class FeatureExtractor(object):
-    
-    def __init__(self, frame_overlap=512, wavelet_type='sym10'):
-        self._frame_overlap = frame_overlap
-        self._wavelet_type = wavelet_type
 
-    def process(self, signal, rate, segments, wavelet_decomposition_level=6):
+    def process(self, signal, rate, segments, wavelet_decomposition_level=6, frame_overlap=512, wavelet_type='sym10'):
         """ Extract features """
         
         self.ExtractedFeaturesList = ['LPC0_mm', 'LPC1_mean', 'LPC1_max', 'LPC1_mm', \
@@ -48,7 +44,7 @@ class FeatureExtractor(object):
         """ Initialize wavelet features
             Based on "Wavelets in Recognition of Bird Sounds" by A. Selin et al.
             EURASIP Journal on Advances in Signal Processing 2007, 2007:051806 """
-        wavelets_calculator = wavelets.Wavelets(self._wavelet_type)
+        wavelets_calculator = wavelets.Wavelets(wavelet_type)
         wavelet_coefficients = wavelets_calculator.decompose(signal, wavelet_decomposition_level)
         
         no_segments = len(segments)
@@ -69,8 +65,8 @@ class FeatureExtractor(object):
         SpectralRolloff = self.Features['SpectralRolloff']
         
         for i, segment in enumerate(segments):
-            start = segment[0] / self._frame_overlap - 1
-            end = segment[1] / self._frame_overlap + 1
+            start = segment[0] / frame_overlap - 1
+            end = segment[1] / frame_overlap + 1
             
             """ Wavelets """
             start_wavelet = segment[0] / 2**wavelet_decomposition_level - 10
@@ -202,6 +198,12 @@ class FeatureExtractor(object):
     def write_extracted_features_to_csv(self, file_name):
         csv_header = ','.join(itertools.chain(self.ExtractedFeaturesList)) + '\n'
         np.savetxt(file_name + '.csv', self.ExtractedFeatures, delimiter=',', header=csv_header)
+        
+    def read_extracted_features_from_csv(self, file_name):
+        return np.loadtxt(file_name, delimiter=',')
+        
+    def read_target(self, file_name):
+        return np.loadtxt(file_name)
         
         
 def maxmin(array):
