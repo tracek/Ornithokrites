@@ -33,6 +33,9 @@ def pp(feature):
 f = open('features_list.txt', 'r')
 features_list = [line.rstrip('\n') for line in f]
 f.close()
+f = open('features_list_limited.txt', 'r')
+features_list_limited = [line.rstrip('\n') for line in f]
+f.close()
 
 features_location = 'C:\\Ornithokrites\\Recordings\\'
 no_features = 34
@@ -62,8 +65,8 @@ kiwi = X[kiwi_mask]
 kiwi_female = X[kiwi_female_mask]
 kiwi_male = X[kiwi_male_mask]
 
-for i in np.arange(no_features):
-    pp(i)
-    plt.savefig(str(i) + '.png')
-    plt.clf()
+selected_features_idx = []
+for f in features_list_limited:
+    selected_features_idx.append(features_list.index(f))
     
+X2 = X[:,selected_features_idx]
