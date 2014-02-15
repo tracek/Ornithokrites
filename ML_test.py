@@ -43,7 +43,7 @@ def pp(data1, label1, data2, label2, feature, features_list):
 def plot_all():
     for i in np.arange(len(features_list_limited)):
         plt.clf()
-        pp(kiwi, 'kiwi', not_kiwi, 'not kiwi', i, features_list_limited)
+        pp(kiwi_female, 'kiwi_female', kiwi_male, 'kiwi_male', i, features_list_limited)
 
 f = open('features_list.txt', 'r')
 features_list = [line.rstrip('\n') for line in f]
@@ -69,6 +69,9 @@ for dirpath, dirnames, filenames in os.walk(features_location):
             path = os.path.join(dirpath, filename)
             target = np.loadtxt(path, 'int')
             Y = np.hstack((Y, target))
+            
+Y2 = np.copy(Y)
+Y2[Y2 == 2] = 1
 
 not_kiwi_mask = Y == 0        
 kiwi_mask = Y > 0
@@ -82,37 +85,46 @@ for f in features_list_limited:
 X_limited = X_full[:,selected_features_idx]
 X_scaled = preprocessing.scale(X_limited)
 
+X_shape = np.shape(X_scaled)
+partition_factor = 15
+offset = 0
+partition_mask = (np.arange(offset, offset + X_shape[0]) % partition_factor == 0)
+
 not_kiwi = X_scaled[not_kiwi_mask]
 kiwi = X_scaled[kiwi_mask]
+kiwi_Y = Y[kiwi_mask]
 kiwi_female = X_scaled[kiwi_female_mask]
 kiwi_male = X_scaled[kiwi_male_mask]
-
-X_shape = np.shape(X_scaled)
-partition_factor = 10
-partition_mask = (np.arange(X_shape[0]) % partition_factor == 0)
 
 test_set = X_scaled[partition_mask]
 expected_test_result = Y[partition_mask]
 training_set = X_scaled[np.invert(partition_mask)]
 training_set_result = Y[np.invert(partition_mask)]
 
-clf = svm.SVC(gamma=0.1, C=2.)
+clf = svm.SVC(gamma=0.1, C=200., kernel='rbf', tol=0.01)
 clf.fit(training_set, training_set_result)
 prediction = clf.predict(test_set)
 
-result = good_sex = 0
+sex_clf = svm.SVC(gamma=0.1, C=200., kernel='rbf', tol=0.01)
+sex_clf.fit(kiwi, kiwi_Y)
+sex_prediction = sex_clf.predict(test_set)
+
+kiwi_prediction_mask = prediction != 0
+predicted_kiwi = test_set[kiwi_prediction_mask]
+
+
+kiwi_or_not_kiwi = good_sex = 0
 for i in np.arange(len(test_set)):
     if prediction[i] == 0 and expected_test_result[i] == 0:
-        result += 1
-        good_sex += 1
+        kiwi_or_not_kiwi += 1
     elif prediction[i] > 0 and expected_test_result[i] > 0:
-        result += 1
+        kiwi_or_not_kiwi += 1
         if prediction[i] == expected_test_result[i]:
             good_sex += 1
 
-print 'Kiwi / not kiwi: {}'.format(result * 100 / len(test_set))
-print 'Male / Female / not kiwi: {}'.format(good_sex * 100 / len(test_set))
-    
+print 'Kiwi / not kiwi: {}'.format(kiwi_or_not_kiwi * 100 / len(test_set))
+print 'Male / Female: {}'.format(good_sex * 100 / kiwi_or_not_kiwi)
+
 
     
     
