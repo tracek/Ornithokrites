@@ -1,0 +1,11 @@
+LPC1_mean
+LSF7_min
+SpectralFlatness_min
+SSS_centroid_min
+SSS_spread_min
+PerceptualSpread_min
+SpectralSlope_min
+PerceptualSharpness_min
+SpectralDecrease_max
+OBSI0_mm
+SpectralRolloff_min
