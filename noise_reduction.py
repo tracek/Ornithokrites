@@ -9,6 +9,59 @@ Various filters
 
 from scipy.signal import firwin, butter, lfilter, kaiserord, wiener
 import numpy as np
+from segmentation import Segmentator
+import voice_enhancement as ve
+
+class NoiseRemover(object):
+    
+    def remove_noise(self, signal, rate):
+        # Apply highpass filter to greatly reduce signal strength below 1500 Hz.  
+        self.sample_highpassed = highpass_filter(signal, rate, 1500)
+        
+        self.segmentator = select_best_segmentator(self.sample_highpassed, rate)
+        no_silence_intervals = self.segmentator.get_number_of_silence_intervals()
+        
+        out = signal
+#                
+#        w = wavelets.Wavelets()
+#        signal = w.denoise(signal)        
+#        
+        if no_silence_intervals == 0:
+            print 'Poorly segmented - no silence at all!'
+            raise ValueError('Could not find any silence intervals')
+        elif no_silence_intervals == 1:
+            print 'One silence interval only'
+            # Perform spectral subtraction on sample (not high-passed!)
+            noise = self.segmentator.get_next_silence(signal) # Get silence period
+            out = ve.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+        else:
+            noise = self.segmentator.get_next_silence(signal) # Get silence period
+            out = ve.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+            noise = self.segmentator.get_next_silence(signal) # Try again
+            out = ve.reduce_noise(out, noise, 0) # Perform spectral subtraction           
+        
+        # Apply high-pass filter on spectral-subtracted sample
+        out = highpass_filter(out, rate, 1500)
+        
+        return out
+   
+    
+def select_best_segmentator(signal, rate):
+    # Segmentator divides a track into segments containing sound features (non-noise)
+    # and silence (noise)
+    segmentator = Segmentator(detector_type='energy', threshold=0.01)    
+    
+    # Perform segmentation on high-passed sample
+    segmentator.process(signal, rate)
+    
+    no_silence_intervals = segmentator.get_number_of_silence_intervals()
+
+    if no_silence_intervals < 1:
+        segmentator = Segmentator(detector_type='energy', threshold=0.2)
+        segmentator.process(signal, rate)
+        no_silence_intervals = segmentator.get_number_of_silence_intervals()
+    
+    return segmentator
 
 def wiener_filter(signal):
     """ Wiener filter. """
@@ -18,8 +71,10 @@ def wiener_filter(signal):
 def remove_clicks(signal, rate, periodicity):
     """ Clicks are short bursts of energy. """
     energy = calculate_energy(signal, periodicity)
+    print energy
     output = signal
-    std = np.std(energy)
+    std = np.mean(energy)
+    print std
     threshold = 5 * std
     for idx, interval in enumerate(energy):
         if interval > threshold:

@@ -23,6 +23,7 @@ class SpectralSubtraction():
         s_amp2 = s_amp**2.0
         amp = s_amp2 - n_pow*self._coefficient
         # amp = s_amp**2.0 - (1 + np.std(n_pow) / n_pow) * n_pow * 2
+        
         amp = sp.maximum(amp, 0.01 * s_amp2)
         amp = sp.sqrt(amp)
         amp = self._ratio*amp + (1.0-self._ratio)*s_amp

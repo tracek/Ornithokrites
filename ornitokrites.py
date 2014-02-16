@@ -11,12 +11,9 @@ Identification of kiwi calls from audio recordings - main module.
 """
 
 import sys
-import csv
 import logging
-import numpy as np
-import nose.tools as nt
-import matplotlib as mpl
-mpl.use('Agg')
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import s3connection as s3
 import noise_reduction as nr
