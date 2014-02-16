@@ -41,108 +41,111 @@ def pp(data1, label1, data2, label2, feature, features_list):
     # plt.show()
     
 def plot_all():
-    for i in np.arange(len(features_list_limited)):
+    for i in np.arange(len(features_list)):
         plt.clf()
-        pp(kiwi_female, 'kiwi_female', kiwi_male, 'kiwi_male', i, features_list_limited)
+        pp(kiwi_female, 'kiwi_female', kiwi_male, 'kiwi_male', i, features_list)
+        
+def load_data(features_location):
+    X = np.empty(shape=(0, no_features))
+    Y = np.empty(0, 'int')
+    for dirpath, dirnames, filenames in os.walk(features_location):
+        for filename in [f for f in filenames if f.endswith(".wav")]:
+            data_path = os.path.join(dirpath, filename + '_data.csv')
+            data = np.loadtxt(data_path, delimiter=',')
+            X = np.vstack((X, data))
+            target_path = os.path.join(dirpath, filename + '_target.txt') 
+            target = np.loadtxt(target_path, 'int')
+            Y = np.hstack((Y, target))
+    return X, Y
 
 f = open('features_list.txt', 'r')
 features_list = [line.rstrip('\n') for line in f]
 f.close()
-f = open('features_list_limited.txt', 'r')
-features_list_limited = [line.rstrip('\n') for line in f]
-f.close()
 
 features_location = '/home/tracek/Ornitokrites/Recordings/'
-no_features = 34
-X_full = np.empty(shape=(0, no_features))
-Y = np.empty(0, 'int')
+no_features = 11
 
-L = []
-
-for dirpath, dirnames, filenames in os.walk(features_location):
-    for filename in filenames:
-        if filename.endswith("_data.csv"):
-            path = os.path.join(dirpath, filename)
-            data = np.loadtxt(path, delimiter=',')
-            X_full = np.vstack((X_full, data))
-        if filename.endswith("_target.txt"):
-            path = os.path.join(dirpath, filename)
-            target = np.loadtxt(path, 'int')
-            Y = np.hstack((Y, target))
-            
-Y2 = np.copy(Y)
-Y2[Y2 == 2] = 1
+X, Y = load_data(features_location)
+X = np.nan_to_num(X)
 
 not_kiwi_mask = Y == 0        
 kiwi_mask = Y > 0
 kiwi_female_mask = Y == 1
 kiwi_male_mask = Y == 2
 
-selected_features_idx = []
-for f in features_list_limited:
-    selected_features_idx.append(features_list.index(f))
-    
-X_limited = X_full[:,selected_features_idx]
-X_scaled = preprocessing.scale(X_limited)
 
-X_shape = np.shape(X_scaled)
-partition_factor = 15
-offset = 0
-partition_mask = (np.arange(offset, offset + X_shape[0]) % partition_factor == 0)
-
-not_kiwi = X_scaled[not_kiwi_mask]
-kiwi = X_scaled[kiwi_mask]
+X = preprocessing.scale(X)
+kiwi = X[kiwi_mask]
 kiwi_Y = Y[kiwi_mask]
-kiwi_female = X_scaled[kiwi_female_mask]
-kiwi_male = X_scaled[kiwi_male_mask]
+kiwi_female = X[kiwi_female_mask]
+kiwi_male = X[kiwi_male_mask]
+not_kiwi = X[not_kiwi_mask]
 
-test_set = X_scaled[partition_mask]
+partition_factor = 5
+offset = 3
+partition_mask = (np.arange(offset, offset + len(X)) % partition_factor == 0)
+
+test_set = X[partition_mask]
 expected_test_result = Y[partition_mask]
-training_set = X_scaled[np.invert(partition_mask)]
+training_set = X[np.invert(partition_mask)]
 training_set_result = Y[np.invert(partition_mask)]
+
 
 clf = svm.SVC(gamma=0.1, C=200., kernel='rbf', tol=0.01)
 clf.fit(training_set, training_set_result)
 prediction = clf.predict(test_set)
 
-sex_clf = svm.SVC(gamma=0.1, C=200., kernel='rbf', tol=0.01)
-sex_clf.fit(kiwi, kiwi_Y)
-sex_prediction = sex_clf.predict(test_set)
-
 kiwi_prediction_mask = prediction != 0
 predicted_kiwi = test_set[kiwi_prediction_mask]
-
 
 kiwi_or_not_kiwi = good_sex = 0
 for i in np.arange(len(test_set)):
     if prediction[i] == 0 and expected_test_result[i] == 0:
         kiwi_or_not_kiwi += 1
+        good_sex += 1
     elif prediction[i] > 0 and expected_test_result[i] > 0:
         kiwi_or_not_kiwi += 1
         if prediction[i] == expected_test_result[i]:
             good_sex += 1
 
-print 'Kiwi / not kiwi: {}'.format(kiwi_or_not_kiwi * 100 / len(test_set))
-print 'Male / Female: {}'.format(good_sex * 100 / kiwi_or_not_kiwi)
+print 'Kiwi / not kiwi: {0:.2f}%'.format(kiwi_or_not_kiwi * 100.0 / len(test_set))
+print 'Male / Female: {0:.2f}%'.format(good_sex * 100.0 / len(test_set))
+
+import pickle
+f = open('model.pkl','wb')
+pickle.dump(clf, f)
+f.close()
+
+from sklearn.cross_validation import StratifiedKFold
+folds = 5
+cv = StratifiedKFold(Y, n_folds=folds)
+
+classifier = svm.SVC(gamma=0.1, C=10., kernel='rbf', tol=0.001, probability=False, random_state=0)
+
+kiwi_correct = 0
+gender_correct = 0
+total = 0
+
+for i, (train, test) in enumerate(cv):
+    prediction = classifier.fit(X[train], Y[train]).predict(X[test])
+    total += len(X[test])
+    for i in np.arange(len(prediction)):
+        if prediction[i] == 0 and Y[test][i] == 0:
+            kiwi_correct += 1
+            gender_correct += 1
+        elif prediction[i] > 0 and Y[test][i] > 0:
+            kiwi_correct += 1
+            if prediction[i] == Y[test][i]:
+                gender_correct += 1
+                
+print 'StratifiedKFold'
+print 'Kiwi / not kiwi: {0:.2f}%'.format(kiwi_correct * 100.0 / total)
+print 'Male / Female: {0:.2f}%'.format(gender_correct * 100.0 / total)
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
