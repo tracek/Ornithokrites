@@ -10,7 +10,7 @@ Various filters
 from scipy.signal import firwin, butter, lfilter, kaiserord, wiener
 import numpy as np
 from segmentation import Segmentator
-import voice_enhancement as ve
+import noise_subtraction as ns
 
 class NoiseRemover(object):
     
@@ -33,12 +33,12 @@ class NoiseRemover(object):
             print 'One silence interval only'
             # Perform spectral subtraction on sample (not high-passed!)
             noise = self.segmentator.get_next_silence(signal) # Get silence period
-            out = ve.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+            out = ns.reduce_noise(signal, noise, 0) # Perform spectral subtraction
         else:
             noise = self.segmentator.get_next_silence(signal) # Get silence period
-            out = ve.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+            out = ns.reduce_noise(signal, noise, 0) # Perform spectral subtraction
             noise = self.segmentator.get_next_silence(signal) # Try again
-            out = ve.reduce_noise(out, noise, 0) # Perform spectral subtraction           
+            out = ns.reduce_noise(out, noise, 0) # Perform spectral subtraction           
         
         # Apply high-pass filter on spectral-subtracted sample
         out = highpass_filter(out, rate, 1500)
