@@ -6,8 +6,9 @@ Software for automatic identification of kiwi calls from audio recordings. Pre-a
 Usage
 ==============
 There are two ways:
-1) For developer: ornithokrites.py [Amazon Web Services bucket name]. It requires user to install bunch of Python modules, some of which have to be compiled. 
-2) For deployment: through a web site. User has to provide bucket name and click a button. All calculation are done on Amazon Web Services EC2 instance of Ubuntu. Currently down for upgrade with new release.
+
+1. **For developer**: ornithokrites.py [*Amazon Web Services bucket name*]. It requires user to install bunch of Python modules, some of which have to be compiled. 
+2. **For deployment**: through a web site. User has to provide bucket name and click a button. All calculation are done on Amazon Web Services EC2 instance of Ubuntu. Currently down for upgrade with new release.
 
 
 What's in:
