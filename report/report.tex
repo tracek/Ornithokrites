@@ -67,7 +67,7 @@
 \begin{document}
 \maketitle
 \section{Overview}
-Ornithokrites is a Latin transliteration of ancient Greek {\selectlanguage{polutonikogreek}'orn"ijokr'iths}, meaning interpreter of flight or cries of birds. With its rather ambitious name, the program itself is a tool meant for the automatic identification of kiwi calls from audio recordings. It is designed to cope with large variations of environmental conditions and low quality of input data. For each provided audio file program tries to find whether it contains any kiwi calls and, if so, whether they are male, female or both. \newline
+Ornithokrites is a transliteration of ancient Greek {\selectlanguage{polutonikogreek}'orn"ijokr'iths}, meaning interpreter of flight or cries of birds. With its rather ambitious name, the program itself is a tool meant for the automatic identification of kiwi calls from audio recordings. It is designed to cope with large variations of environmental conditions and low quality of input data. For each provided audio file, the program tries to find whether it contains any kiwi calls and, if so, whether they are male, female or both. \newline
 Complete source code can be found on project's web site: \url{https://github.com/tracek/Ornithokrites}.
 
 \section{How to use it}
@@ -85,7 +85,7 @@ After providing the credentials user is directed to a simple web form that serve
 \end{itemize}
 \subsection{Interactive mode}
 \label{sec:interactive_mode}
-The program is written in Python, which means running it directly, either from command line or in interactive mode, requires installation of all dependent modules; complete list can be found on project's page. Mind that 
+The program is written in Python, which means running it directly, either from command line or in interactive mode, requires installation of all dependent modules; complete list can be found on project's page. Due to the dependencies installing is not an easy task.
 \subsubsection{Batch mode - command line}
 \texttt{ornithiokrites.py -path [path to data]} - will run the identification on all WAVE files contained in \texttt{path} and its sub-folders.
 \subsubsection{Single-file mode - graphical user interface}
@@ -114,7 +114,7 @@ After the recordings are ready following steps take place:
 
 \section{Validation results}
 Program was tested using stratified 5-fold cross-validation. Based on provided training it has $98$\% accuracy in telling kiwi apart from non-kiwi and $92$\% accuracy.
-
+\begin{table}[hp]
 \begin{tabularx}{.7\textwidth}{c|c c c c |}
  & Kiwi Male & Kiwi Female & Male and Female & \multicolumn{1}{c}{Not a kiwi} \\
 \hhline{-----}
@@ -124,6 +124,10 @@ Male and Female & 0 & 2 & 3 \cellcolor[gray]{.8} & 0 \\
 Not a kiwi & 0 & 2 & 3 & 0 \cellcolor[gray]{.8} \\
 \hhline{~----}
 \end{tabularx}
+\end{table}
+
+\section{Acknowledgments}
+I wish to thank Barry Polley for providing this utmost interesting challenge and his assistance along the way. My great appreciation also goes to Pat Miller of \url{birdingNZ.net} community that supplied me with invaluable help concerning kiwi identification. Without his help I would not be able to achieve such high accuracy.
 
 %%% End document
 \end{document}
