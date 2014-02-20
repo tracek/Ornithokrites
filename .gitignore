@@ -24,6 +24,7 @@
 *.mtc1
 *.out
 *.synctex.gz
+report.log
 
 # C extensions
 *.so
