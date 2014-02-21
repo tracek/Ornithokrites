@@ -94,7 +94,7 @@ expected_test_result = Y[partition_mask]
 training_set = X[np.invert(partition_mask)]
 training_set_result = Y[np.invert(partition_mask)]
 
-clf = svm.SVC(gamma=0.1, C=10., kernel='rbf', tol=0.01, probability=True)
+clf = svm.SVC(gamma=0.01, C=100., kernel='rbf', tol=0.01, probability=True)
 clf.fit(training_set, training_set_result)
 prediction = clf.predict(test_set)
 
@@ -115,10 +115,7 @@ print 'Kiwi / not kiwi: {0:.2f}%'.format(kiwi_or_not_kiwi * 100.0 / len(test_set
 print 'Male / Female: {0:.2f}%'.format(good_sex * 100.0 / len(test_set))
 
 import pickle
-f = open('model.pkl','wb')
-pickle.dump(clf, f)
-f.close()
-
+pickle.dump(clf, open('model.pkl','wb'))
 pickle.dump(scaler, open('scaler.pkl', 'wb'))
 
 from sklearn.cross_validation import StratifiedKFold

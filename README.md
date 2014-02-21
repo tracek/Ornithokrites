@@ -1,7 +1,6 @@
 Ornithokrites
 ============
-Software for automatic identification of kiwi calls from audio recordings. Pre-alpha, feature complete. What's left is tuning the machine learing algorithm.
-
+Ornithokrites is a transliteration of ancient Greek όρνϊθοκρίτης, meaning interpreter of flight or cries of birds. With its rather ambitious name, the program itself is a tool meant for the automatic identification of kiwi calls from audio recordings. It is designed to cope with large variations of environmental conditions and low quality of input data. For each provided audio file, the program tries to find whether it contains any kiwi calls and, if so, whether they are male, female or both.
 
 Usage
 ==============
@@ -37,5 +36,10 @@ Kiwi calls are highly correlated. Make use of this in establishing the result.
 Technology
 =============
 Python, numerically intensive parts in C/C++.
+
+
+Acknowledgements
+=============
+I wish to thank Barry Polley for providing this utmost interesting challenge and his assistance along the way. My great appreciation also goes to Pat Miller of [BirdingNZ.net community](http://www.birdingnz.net/) that supplied me with invaluable help concerning kiwi identification; without his aid I would not be able to achieve such high accuracy.
 
 
