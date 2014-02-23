@@ -56,7 +56,7 @@
 		\horrule{2pt} \\[0.5cm]
 }
 \author{
-		\normalfont 								\normalsize
+		\normalfont 					\normalsize
         Lukasz Tracewski\\[-3pt]		\normalsize
         \today
 }
@@ -80,21 +80,30 @@ After providing the credentials user is directed to a simple web form that serve
 	\item Bucket name: name of Amazon Web Services S3 bucket, e.g. \textit{kiwicalldata}.
 	\item Execute: connect to data store, download the recordings and run kiwi calls identification. It is a long-lasting operation. Closing the web page does not stop execution.
 	\item Report: show results. Since they are generated live, user can click the button at any moment to get current state of affairs. Only text is printed, making it very fast.
-	\item Show details: show detailed results. In this mode additional data is provided: spectrogram with identified fragments and option to play the original audio, allowing user to verify program's predictions.
+	\item Show details: show detailed results. In this mode additional data is provided: spectrogram \ref{fig:spectrogram} with identified Regions Of Interest: blue triangles are detected male kiwi calls and green circles stand for female kiwi calls. Mind that single detected kiwi call does not make a kiwi; only in groups program considers them as candidates. Additionally, an option to play the original audio is provided, allowing user to verify program's predictions.
 	\item Clear: stop execution of the program and clear all intermediate results.
 \end{itemize}
+
+\begin{figure}[hbtp]
+\label{fig:spectrogram}
+\caption{Example of spectrogram showing male and female kiwi}
+\centering
+\includegraphics[scale=0.8]{spectrogram.png}
+\end{figure}
+
+
 \subsection{Interactive mode}
 \label{sec:interactive_mode}
 The program is written in Python, which means running it directly, either from command line or in interactive mode, requires installation of all dependent modules; complete list can be found on project's page. Due to the dependencies installing is not an easy task.
 \subsubsection{Batch mode - command line}
-\texttt{ornithiokrites.py -path [path to data]} - will run the identification on all WAVE files contained in \texttt{path} and its sub-folders.
+Executing program with '-h' switch, i.e. \texttt{ornithiokrites.py -h}, will print complete help with command line arguments explained. This mode allows batch processing of files stored on a disc.
 \subsubsection{Single-file mode - graphical user interface}
-If no command line arguments are provided then program will start in interactive mode. With open file dialog user can select a single file for analysis.
+If no command line arguments are provided then program will start in interactive mode. With open file dialogue user can select a single file for analysis.
 \section{How it works}
 After the recordings are ready following steps take place:
 \begin{enumerate}
 	\item \textbf{Apply high-pass filter}. This step will reduce strength of any signal below 1500 Hz. Experiments so far have shown that kiwi rarely show any vocalization below this value. It also helps to eliminate bird calls of no interest to us, e.g. long-tailed cuckoo.
-	\item \textbf{Find Regions of Interest} (ROIs), defined as any signal different than background noise. Since length of a single kiwi call is roughly constant, ROI length is fixed to one second. First onsets are found by calculating local energy of the input spectral frame and taking those above certain dynamically-assessed threshold. Then from the detected onset a delay of $-0.2$s is taken to compensate for possible discontinuities. End of ROI is defined as $+0.8$s after beginning of the onset, summing to $1$s interval. The algorithm is made sensitive, since potential cost of not including kiwi candidate in set of ROIs is much higher then adding noise-only ROI.
+	\item \textbf{Find Regions of Interest} (ROIs), defined as any signal different than background noise. Since length of a single kiwi call is roughly constant, ROI length is fixed to one second. First onsets are found by calculating local energy of the input spectral frame and taking those above certain dynamically-assessed threshold. Then from the detected onset a delay of $-0.2$s is taken to compensate for possible discontinuities. End of ROI is defined as $+0.8$s after beginning of the onset, summing to $1$s interval. The algorithm is made sensitive, since potential cost of not including kiwi candidate in a set of ROIs is much higher then adding noise-only ROI.
 	\item \textbf{Reduce noise}. Since ROIs are identified, Noise-Only Regions (NORs) can be estimated as anything outside ROIs plus some margin. Based on NORs spectral subtraction is performed: knowing noise spectrum we can try to eliminate noise over whole sample.
 	\item \textbf{Calculate Audio Features}. Those features will serve as a kiwi audio signature, allowing to discriminate kiwi male from female - and the two from not a kiwi. For each ROI following features are calculated:
 	\begin{itemize}
@@ -108,29 +117,47 @@ After the recordings are ready following steps take place:
 		\item Line Spectral Pairs (LSP)
 	\end{itemize}
 	AFs are calculated with \texttt{Yaafe} library. On its project page \url{http://yaafe.sourceforge.net/features.html} a complete description of above-mentioned features can be found.
-	\item \textbf{Perform kiwi identification}. At this stage Audio Features are extracted from the recording. Based on those, a Machine Learning algorithm, that is Support Vector Machines (SVM), will try to classify ROI as kiwi male, kiwi female and not a kiwi. At this moment additional rules are applied, employing our knowledge on repetitive character of kiwi calls. Only once sufficiently long set of calls is identified, the kiwi presence is marked. 
+	\item \textbf{Perform kiwi identification}. At this stage Audio Features are extracted from the recording. Based on those, a Machine Learning algorithm, that is Support Vector Machine (SVM), will try to classify ROI as kiwi male, kiwi female and not a kiwi. Additional rules are then applied, employing our knowledge on repetitive character of kiwi calls. Only once sufficiently long set of calls is identified, the kiwi presence is marked. 
 	\item \textbf{Report}. Algorithm output can be: female, male, male and female and no kiwi detected.
 \end{enumerate}
 
 \section{Validation results}
-Program was tested using stratified 5-fold cross-validation. Based on provided training it has $98$\% accuracy in telling kiwi apart from non-kiwi and $92$\% accuracy.
+Program was tested using stratified 5-fold cross-validation \footnote{\url{http://en.wikipedia.org/wiki/Cross-validation_\%28statistics\%29}}. Per Region Of Interest model got 93\% accuracy in telling kiwi apart from not a kiwi and 90\% overall. Per file those numbers raise to 99\% and 97\% respectively, which is possible thanks to employment of the most prominent feature of kiwi calls: their repetitive character. 
+
 \begin{table}[hp]
+\label{tab:confusion}
+\caption{Confusion matrix}
 \begin{tabularx}{.7\textwidth}{c|c c c c |}
  & Kiwi Male & Kiwi Female & Male and Female & \multicolumn{1}{c}{Not a kiwi} \\
 \hhline{-----}
-Kiwi Male & 0 \cellcolor[gray]{.8}& 0 & 0 & 0 \\
-Kiwi Female & 0 & 0 \cellcolor[gray]{.8}& 0 & 0 \\
-Male and Female & 0 & 0 & 0 \cellcolor[gray]{.8} & 0 \\
-Not a kiwi & 0 & 0 & 0 & 0 \cellcolor[gray]{.8} \\
+Kiwi Male & 65 \cellcolor[gray]{.8}& 0 & 0 & 1 \\
+Kiwi Female & 0 & 35 \cellcolor[gray]{.8}& 0 & 0 \\
+Male and Female & 1 & 3 & 26 \cellcolor[gray]{.8} & 0 \\
+Not a kiwi & 0 & 0 & 0 & 30 \cellcolor[gray]{.8} \\
 \hhline{~----}
 \end{tabularx}
 \end{table}
 
+As can be seen from the confusion matrix \footnote{\url{http://en.wikipedia.org/wiki/Confusion_matrix}} in table \ref{tab:confusion}, the program may misclassify a file when male and female are chatting label the pair as either Male or Female.
+
+Since the program was trained on 1-minute samples, it very well might be that many times longer recordings will require a bit different approach with respect to noise reduction - and thus prove more challenging to the algorithm; nothing that cannot be fixed with more training data.
+
+Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz.
+
 \section{Developer's notes}
-Ornithokrites is written in Python 2.7, with all of its heavy-duty numerical computations done in C/C++ compiled libraries. Comments in the code were formatted according to NumPy guidelines, so that they can be easily extracted by a capable program (e.g. Spyder). Program was tested on Linux, although, given enough determination, it should be also possible to run it on Windows and Mac OS. 
+Following notes provide more technical information of little interest for the end user.
+\subsection{Technology}
+Ornithokrites is written in Python 2.7, with all of its heavy-duty numerical computations done in C/C++ compiled libraries. Comments in the code were formatted according to NumPy guidelines, so that they can be easily extracted by a capable program (e.g. Spyder). Program was tested on Linux, although, given enough determination, it should be also possible to run it on Windows and Mac OS.
+\subsection{Machine Learning algorithm}
+The Machine Learning algorithm used in this program, that is Support Vector Machine with Gaussian kernel, belongs to a class of supervised models. As a consequence, it requires labelled training set for fitting the model. At this moment 3318 fragments were classified as either male, female or not a kiwi. It is a manual task with a labelling dependant on ones proficiency in kiwi identification - and hence prone to errors.
 
 \section{Acknowledgments}
 I wish to thank Barry Polley for providing this utmost interesting challenge and his assistance along the way. My great appreciation also goes to Pat Miller of \url{birdingNZ.net} community that supplied me with invaluable help concerning kiwi identification; without his aid I would not be able to achieve such high accuracy.
+
+\section{Contact information}
+My e-mail: \href{mailto:lukasz.tracewski@gmail.com}{lukasz.tracewski@gmail.com}
+\newline
+Project's web page: \url{https://github.com/tracek/Ornithokrites}.
 
 %%% End document
 \end{document}
