@@ -4,14 +4,61 @@ Created on Sun Dec  1 21:33:27 2013
 
 @author: Lukasz Tracewski
 
-Module for handling input and output
+Module for handling recordings' input and output. 
 """
-from __future__ import division
 
+from __future__ import division
 import os
+import logging
+import Tkinter, tkFileDialog
 import numpy as np
 import nose.tools as nt
 import scipy.io.wavfile as wav
+import s3connection
+import reporting
+from argparse import ArgumentParser
+
+def process_input_arguments():
+    """ Parse input arguments and retrieve data. Returns location of recordings """
+    
+    root = logging.getLogger()
+    if root.handlers:
+        for handler in root.handlers:
+            root.removeHandler(handler)    
+    
+    parser = ArgumentParser(description='Automatic identification of kiwi calls from audio recordings',
+                            prog='Ornithokrites', epilog='lukasz.tracewski@gmail.com')
+    parser.add_argument('-b', '--bucket', help='Amazon Web Services S3 bucket name')
+    parser.add_argument('-d', '--datastore', help='Directory to process')
+    parser.add_argument('--stdout', help='Print messages to standard output', action='store_true')
+    args = parser.parse_args()
+    
+    if args.bucket: # Web Interface
+        if args.datastore:
+            data_store = args.datastore
+        else:
+            data_store = '/var/www/results/Recordings/' # default for the Web Interface
+        reporting.get_logger('log.html', data_store, args.stdout)
+        reporting.get_logger('devlog.html', data_store)                      
+        s3connection.read_data(bucket_name=args.bucket, output_recordings_dir=data_store)
+    elif args.datastore: # Command-line batch mode
+        data_store = args.datastore
+        reporting.get_logger('log.html', data_store, args.stdout)
+        reporting.get_logger('devlog.html', data_store)          
+    else: # Interactive mode
+        root = Tkinter.Tk()
+        root.withdraw()
+        data_store = tkFileDialog.askopenfilename()    
+        reporting.get_logger('log.html', './', True)
+        reporting.get_logger('devlog.html', './')          
+    
+    return data_store
+
+def get_recordings_walker():
+    """ Returns recordings walker """
+    data_store = process_input_arguments()
+    walker = Walker(data_store)
+    return walker
 
 def read(path):
     """ Read wave file from the given path """
@@ -77,9 +124,14 @@ class Walker(object):
         find wave files
         """
         self._recordings = []
+        
+        if os.path.isfile(recordings_location) and recordings_location.endswith('.wav'):
+            self._recordings.append(recordings_location)        
+        
         for dirpath, dirnames, filenames in os.walk(recordings_location):
-            for filename in [f for f in filenames if f.endswith(".wav") and not f.endswith('_seg.wav')]:
+            for filename in [f for f in filenames if f.endswith('.wav') and not f.endswith('_seg.wav')]:
                 self._recordings.append(os.path.join(dirpath, filename))
+                
         nt.assert_true(self._recordings, "No recordings found!")
         
     def read_wave(self):

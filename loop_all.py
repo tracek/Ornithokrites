@@ -27,7 +27,6 @@ progress = 0.
 #file_model = open('model.pkl', 'rb')
 #model = pickle.load(file_model)
 #file_model.close()
-
 for rate, sample, sample_name in walker.read_wave(): 
     
     noise_remover = nr.NoiseRemover()
@@ -41,11 +40,6 @@ for rate, sample, sample_name in walker.read_wave():
     
     feature_extractor = features.FeatureExtractor()
     feature_extractor.process(out, rate, segmented_sounds)
-    
-#    X = feature_extractor.ExtractedFeatures
-#    X = np.nan_to_num(X)
-#    X = preprocessing.scale(X)
-#    P = model.predict(X)
     
     feature_extractor.write_extracted_features_to_csv(sample_name + '_data')
     feature_extractor.plot_features(sample_name + '_features')

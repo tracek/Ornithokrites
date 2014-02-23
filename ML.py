@@ -2,7 +2,7 @@
 """
 Created on Sat Feb 15 07:05:19 2014
 
-@author: tracek
+@author: Lukasz Tracewski
 """
 
 import os
@@ -33,12 +33,13 @@ f.close()
 features_location = '/home/tracek/Ornitokrites/Recordings/'
 
 X, Y = load_data(features_location, len(features_list))
+scaler = preprocessing.StandardScaler().fit(X)
 X = np.nan_to_num(X)
-X = preprocessing.scale(X)
+X = scaler.transform(X)
 
 folds = 5
 cv = StratifiedKFold(Y, n_folds=folds)
-classifier = svm.SVC(gamma=0.1, C=10., kernel='rbf', tol=0.001, probability=False, random_state=0)
+classifier = svm.SVC(gamma=0.1, C=20., kernel='rbf', tol=0.1, probability=False, random_state=0)
 
 kiwi_correct = 0
 gender_correct = 0
@@ -58,9 +59,15 @@ print 'StratifiedKFold'
 print 'Kiwi / not kiwi: {0:.2f}%'.format(kiwi_correct * 100.0 / len(X))
 print 'Overall: {0:.2f}%'.format(gender_correct * 100.0 / len(X))
 
-f = open('model.pkl','wb')
-pickle.dump(classifier, f)
-f.close()
+#pickle.dump(classifier, open('model2.pkl','wb'))
+#pickle.dump(scaler, open('scaler2.pkl', 'wb'))
+
+
+
+
+
+
+
 
 
 

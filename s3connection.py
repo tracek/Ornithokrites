@@ -27,24 +27,27 @@ def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/')
     Returns
     -------
     Nothing
-    """        
+    """
+    log = logging.getLogger('log.html') 
+    devlog = logging.getLogger('devlog.html') 
+        
     try:
-        logging.info('Connecting to S3 ...<br/>')
+        log.info('Connecting to S3 ...')
         s3 = boto.connect_s3()
     except:
-	logging.critical('Failure while connecting to S3. Check credentials.<br/>')
+	logging.critical('Failure while connecting to S3. Check credentials.')
         sys.exit(1)
     try:
-        logging.info('Connection established. Fetching bucket %s...<br/>', bucket_name)
+        log.info('Connection established. Fetching bucket %s...', bucket_name)
         bucket = s3.get_bucket(bucket_name)
     except:
-        logging.critical('Failure while connecting to bucket. Check if bucket exists.<br/>')
+        log.critical('Failure while connecting to bucket. Check if bucket exists.')
         sys.exit(1)    
     
-    logging.info('Bucket ready. Getting data ...<br/>')
+    log.info('Bucket ready. Getting data ...')
     for key in bucket.list():
         if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-            logging.info('Downloading %s', key.name)
+            devlog.info('Downloading %s', key.name)
             path = os.path.join(output_recordings_dir, key.name)
             _make_sure_dir_exists(path)
             key.get_contents_to_filename(path)

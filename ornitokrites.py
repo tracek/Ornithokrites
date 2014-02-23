@@ -19,7 +19,6 @@ import s3connection as s3
 import noise_reduction as nr
 import recordings_io
 import voice_enhancement as ve
-# import yaafelib as yf
 from segmentation import Segmentator
 
 logging.basicConfig(filename='/var/www/results/log.html', filemode='w', format='%(message)s <br/>', level=logging.INFO)
@@ -34,7 +33,6 @@ if (len(sys.argv) != 2):
 else:
     user_bucket = sys.argv[1]
 
-# Here all recordings will be stored
 data_store = '/var/www/results/Recordings/'
 
 # Download recordings from a bucket
@@ -74,28 +72,6 @@ for rate, sample, sample_name in walker.read_wave():
     
     # Get segments of signal that contain audio features
     segmented_sounds = segmentator.get_segmented_sounds()
-    
-    # Get features
-#    fp = yf.FeaturePlan(sample_rate=rate)
-#    success = fp.loadFeaturePlan('features.config')
-#    nt.assert_true(success, 'features config not loaded correctly')
-#    engine = yf.Engine()
-#    engine.load(fp.getDataFlow())    
-#    engine.reset()
-#    
-#    file_csv = open(sample_name + '.csv','wb')
-#    header_written = False
-#    sounds = []
-#    for start, end in segmentator.get_segmented_sounds():
-#        audio = out[start:end]
-#        feats = engine.processAudio(np.array([audio]))
-#        w = csv.DictWriter(file_csv, feats.keys())
-#        if not header_written:    
-#            w.writeheader()
-#            header_written = True
-#        w.writerow(feats)
-#        sounds.append(feats)
-#    file_csv.close()
     
     # Write cleared audio features to a file
     segmented_sample_name = sample_name + '_seg.wav'

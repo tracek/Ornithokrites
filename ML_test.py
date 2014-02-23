@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb 15 07:05:19 2014
-
-@author: tracek
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Mon Feb 10 12:32:13 2014
 
-@author: ltracews
+@author: Lukasz Tracewski
 """
 
 import os
@@ -85,7 +78,7 @@ kiwi_female = X[kiwi_female_mask]
 kiwi_male = X[kiwi_male_mask]
 not_kiwi = X[not_kiwi_mask]
 
-partition_factor = 10
+partition_factor = 8
 offset = 0
 partition_mask = (np.arange(offset, offset + len(X)) % partition_factor == 0)
 
@@ -94,7 +87,7 @@ expected_test_result = Y[partition_mask]
 training_set = X[np.invert(partition_mask)]
 training_set_result = Y[np.invert(partition_mask)]
 
-clf = svm.SVC(gamma=0.01, C=100., kernel='rbf', tol=0.01, probability=True)
+clf = svm.SVC(gamma=0.1, C=20., kernel='rbf', tol=0.01, probability=True)
 clf.fit(training_set, training_set_result)
 prediction = clf.predict(test_set)
 
@@ -114,14 +107,9 @@ for i in np.arange(len(test_set)):
 print 'Kiwi / not kiwi: {0:.2f}%'.format(kiwi_or_not_kiwi * 100.0 / len(test_set))
 print 'Male / Female: {0:.2f}%'.format(good_sex * 100.0 / len(test_set))
 
-import pickle
-pickle.dump(clf, open('model.pkl','wb'))
-pickle.dump(scaler, open('scaler.pkl', 'wb'))
-
-from sklearn.cross_validation import StratifiedKFold
-folds = 5
-cv = StratifiedKFold(Y, n_folds=folds)
-
+#import pickle
+#pickle.dump(clf, open('model.pkl','wb'))
+#pickle.dump(scaler, open('scaler.pkl', 'wb'))
 
 total = 0
 files = 0

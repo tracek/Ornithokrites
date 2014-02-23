@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb 10 12:32:13 2014
+
+@author: Lukasz Tracewski
+"""
+
 import recordings_io
 import matplotlib.pyplot as plt
 import noise_reduction as nr
