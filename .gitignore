@@ -60,3 +60,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Project-specific files
+reporting.config
+*_exp.py
