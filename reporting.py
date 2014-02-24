@@ -12,6 +12,7 @@ import logging
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import smtplib
 
 def get_logger(name, path, stdout=False):
     if not os.path.exists(path):
@@ -70,3 +71,36 @@ def remove_loggers():
     logging.getLogger('devlog.html').handlers = []
     logging.shutdown()
     
+def send_email():
+    with open ("reporting.config", "r") as credentials:
+        (gmail_user, gmail_pwd) = credentials.read().splitlines()
+    FROM = 'Kiwi-Finder no-reply'
+    TO = ['lukasz.tracewski@gmail.com'] #must be a list
+    SUBJECT = "Kiwi-Finder: your data is ready"
+    TEXT = """
+           Kiwi-Finder.info has finished processing your recordings.
+           Report is available here: http://kiwi-finder.info/results/log.html
+           
+           Cheers,
+           http://kiwi-finder.info
+           """
+
+    # Prepare actual message
+    message = """\From: %s\nTo: %s\nSubject: %s\n\n%s
+    """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+#    try:
+#        #server = smtplib.SMTP(SERVER) 
+#        server = smtplib.SMTP("smtp.gmail.com", 587) #or port 465 doesn't seem to work!
+#        server.ehlo()
+#        server.starttls()
+#        server.login(gmail_user, gmail_pwd)
+#        server.sendmail(FROM, TO, message)
+#        #server.quit()
+#        server.close()
+#        print 'successfully sent the mail'
+#    except:
+#        print "failed to send mail"    
+    
+""" Test """
+if __name__ == '__main__':
+    send_email()
