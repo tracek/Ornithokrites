@@ -108,14 +108,16 @@ After the recordings are ready following steps take place:
 	\item \textbf{Reduce noise}. Since ROIs are identified, Noise-Only Regions (NORs) can be estimated as anything outside ROIs (including some margin). Based on NORs spectral subtraction is performed: knowing noise spectrum we can try to eliminate noise over whole sample.
 	\item \textbf{Calculate Audio Features}. Those features will serve as a kiwi audio signature, allowing to discriminate kiwi male from female - and a kiwi from any other animals. For each ROI following features are calculated:
 	\begin{itemize}
-		\item spectral flatness
 		\item perceptual spread
+		\item perceptual sharpness
+		\item spectral flatness
 		\item spectral roll-off
 		\item spectral decrease
 		\item spectral shape statistics
 		\item spectral slope
 		\item Linear Predictive Coding (LPC)
 		\item Line Spectral Pairs (LSP)
+		\item Octave Band Signal Intensity (OBSI)
 	\end{itemize}
 	Audio Features are calculated with \texttt{Yaafe} library. On its project page \url{http://yaafe.sourceforge.net/features.html} a complete description of above-mentioned features can be found.
 	\item \textbf{Perform kiwi identification}. At this stage Audio Features are extracted from the recording. Based on these, a Machine Learning algorithm, that is Support Vector Machine (SVM), will try to classify ROI as kiwi male, kiwi female and not a kiwi. Additional rules are then applied, employing our knowledge on repetitive character of kiwi calls. Only in case a sufficiently long set of calls is identified, the kiwi presence is marked. 
