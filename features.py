@@ -72,7 +72,9 @@ class FeatureExtractor(object):
             self.ExtractedFeatures[i,7] = PerceptualSharpness[start:end].min() 
             self.ExtractedFeatures[i,8] = SpectralDecrease[start:end].max()  
             self.ExtractedFeatures[i,9] = maxmin(OBSI0[start:end])
-            self.ExtractedFeatures[i,10] = SpectralRolloff[start:end].min()        
+            self.ExtractedFeatures[i,10] = SpectralRolloff[start:end].min()      
+            
+        return self.ExtractedFeatures
 
         
     def plot_features(self, file_name=''):

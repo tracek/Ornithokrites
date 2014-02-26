@@ -15,48 +15,25 @@ import numpy as np
 import nose.tools as nt
 import scipy.io.wavfile as wav
 import s3connection
-import reporting
-from argparse import ArgumentParser
 
-def process_input_arguments():
-    """ Parse input arguments and retrieve data. Returns location of recordings """
-    
-    root = logging.getLogger()
-    if root.handlers:
-        for handler in root.handlers:
-            root.removeHandler(handler)    
-    
-    parser = ArgumentParser(description='Automatic identification of kiwi calls from audio recordings',
-                            prog='Ornithokrites', epilog='lukasz.tracewski@gmail.com')
-    parser.add_argument('-b', '--bucket', help='Amazon Web Services S3 bucket name')
-    parser.add_argument('-d', '--datastore', help='Directory to process')
-    parser.add_argument('--stdout', help='Print messages to standard output', action='store_true')
-    args = parser.parse_args()
-    
-    if args.bucket: # Web Interface
-        if args.datastore:
-            data_store = args.datastore
-        else:
-            data_store = '/var/www/results/Recordings/' # default for the Web Interface
-        reporting.get_logger('log.html', data_store, args.stdout)
-        reporting.get_logger('devlog.html', data_store)                      
-        s3connection.read_data(bucket_name=args.bucket, output_recordings_dir=data_store)
-    elif args.datastore: # Command-line batch mode
-        data_store = args.datastore
-        reporting.get_logger('log.html', data_store, args.stdout)
-        reporting.get_logger('devlog.html', data_store)          
-    else: # Interactive mode
+def get_data(bucket, data_store):
+    if bucket:
+        s3connection.read_data(bucket_name=bucket, output_recordings_dir=data_store)
+    if not data_store:
         root = Tkinter.Tk()
         root.withdraw()
-        data_store = tkFileDialog.askopenfilename()    
-        reporting.get_logger('log.html', './', True)
-        reporting.get_logger('devlog.html', './')          
+        data_store = tkFileDialog.askopenfilename()
+        
     
-    return data_store
-
-def get_recordings_walker():
+def get_recordings_walker(data_store, bucket):
     """ Returns recordings walker """
-    data_store = process_input_arguments()
+    if bucket:
+        s3connection.read_data(bucket_name=bucket, output_recordings_dir=data_store)
+    if not data_store:
+        root = Tkinter.Tk()
+        root.withdraw()
+        data_store = tkFileDialog.askopenfilename()
+        
     walker = Walker(data_store)
     return walker
 

@@ -75,9 +75,10 @@ Expected input are monaural (single-channel) audio files in Waveform Audio File 
 \subsection{Web interface}
 \label{sec:web_interface}
 If the data is stored on Amazon Web Services S3 bucket, then by far the easiest way of using the program is through a password-protected web site: \url{http://kiwi-finder.info}. This protection is necessary since only one user at a time can run the program. \newline
-After providing the credentials, the user is directed to a simple web form that serves as an interface to the application. 
+After providing the credentials, the user is directed to a simple web form that serves as an interface to the application. The form contains the following:
 \begin{itemize}
 	\item Bucket name: name of Amazon Web Services S3 bucket, e.g. \textit{kiwicalldata}.
+	\item E-mail address: if provided, an e-mail will be send to the given address once data processing is completed.
 	\item Execute: connect to data store, download the recordings and run kiwi calls identification. It is a long-lasting operation. Closing the web page does not stop the program.
 	\item Report: show results. Since they are generated live, user can click the button at any moment to get current state of affairs. Only text is printed, making it very fast.
 	\item Show details: show detailed results. In this mode additional data is provided: spectrogram \ref{fig:spectrogram} with identified Regions Of Interest: blue triangles are detected male kiwi calls and green circles stand for female kiwi calls. Please keep in mind that a single detected kiwi call does not make a kiwi; only calls that appear in clusters are considered as candidates. Additionally, an option to play the original audio is provided, allowing the user to verify program's predictions.
@@ -88,7 +89,7 @@ After providing the credentials, the user is directed to a simple web form that 
 \label{fig:spectrogram}
 \caption{Example of spectrogram showing male and female kiwi}
 \centering
-\includegraphics[scale=0.8]{spectrogram.png}
+\includegraphics[scale=0.7]{spectrogram.png}
 \end{figure}
 
 
@@ -107,16 +108,18 @@ After the recordings are ready following steps take place:
 	\item \textbf{Reduce noise}. Since ROIs are identified, Noise-Only Regions (NORs) can be estimated as anything outside ROIs (including some margin). Based on NORs spectral subtraction is performed: knowing noise spectrum we can try to eliminate noise over whole sample.
 	\item \textbf{Calculate Audio Features}. Those features will serve as a kiwi audio signature, allowing to discriminate kiwi male from female - and a kiwi from any other animals. For each ROI following features are calculated:
 	\begin{itemize}
-		\item spectral flatness
 		\item perceptual spread
+		\item perceptual sharpness
+		\item spectral flatness
 		\item spectral roll-off
 		\item spectral decrease
 		\item spectral shape statistics
 		\item spectral slope
 		\item Linear Predictive Coding (LPC)
 		\item Line Spectral Pairs (LSP)
+		\item Octave Band Signal Intensity (OBSI)
 	\end{itemize}
-	AFs are calculated with \texttt{Yaafe} library. On its project page \url{http://yaafe.sourceforge.net/features.html} a complete description of above-mentioned features can be found.
+	Audio Features are calculated with \texttt{Yaafe} library. On its project page \url{http://yaafe.sourceforge.net/features.html} a complete description of above-mentioned features can be found.
 	\item \textbf{Perform kiwi identification}. At this stage Audio Features are extracted from the recording. Based on these, a Machine Learning algorithm, that is Support Vector Machine (SVM), will try to classify ROI as kiwi male, kiwi female and not a kiwi. Additional rules are then applied, employing our knowledge on repetitive character of kiwi calls. Only in case a sufficiently long set of calls is identified, the kiwi presence is marked. 
 	\item \textbf{Report}. Algorithm output can be: female, male, male and female and no kiwi detected.
 \end{enumerate}
