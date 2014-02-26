@@ -27,10 +27,8 @@ class NoiseRemover(object):
 #        signal = w.denoise(signal)        
 #        
         if no_silence_intervals == 0:
-            print 'Poorly segmented - no silence at all!'
             raise ValueError('Could not find any silence intervals')
         elif no_silence_intervals == 1:
-            print 'One silence interval only'
             # Perform spectral subtraction on sample (not high-passed!)
             noise = self.segmentator.get_next_silence(signal) # Get silence period
             out = ns.reduce_noise(signal, noise, 0) # Perform spectral subtraction

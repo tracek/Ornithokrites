@@ -7,11 +7,10 @@ Created on Wed Feb 26 08:56:34 2014
 Module for parsing user input
 """
 
-import Tkinter, tkFileDialog
 from collections import namedtuple
 from argparse import ArgumentParser
 
-AppConfig = namedtuple('AppConfig', ['data_store', 'bucket','write_stdout'])
+AppConfig = namedtuple('AppConfig', ['data_store', 'bucket', 'write_stdout'])
 
 class Configurator(object):
     
@@ -32,9 +31,5 @@ class Configurator(object):
                 self.Data_Store = '/var/www/results/Recordings/' # default for the Web Interface                
         elif args.datastore: # Command-line batch mode
             self.Data_Store = args.datastore        
-        else: # Interactive mode
-            root = Tkinter.Tk()
-            root.withdraw()
-            self.Data_Store = tkFileDialog.askopenfilename()
-            
+    
         return AppConfig(self.Data_Store, args.bucket, args.stdout)
