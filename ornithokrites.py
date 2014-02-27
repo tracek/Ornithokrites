@@ -15,6 +15,16 @@ import noise_reduction
 import features
 import identification
 
+
+class MassiveOrnithokrites(object):
+""" This class is meant as a replacement of original Ornithokrites. Purpose is to make processing
+    of data on-demand: file is not downloaded unless at given moment it needs to be processed. 
+    Another advantage is that we can enable parallel processing: there are no reasons why we should
+    not work in parallel on number of samples equal to number of CPU cores """
+    
+    app_config = configuration.Configurator().parse_arguments()
+    reporter = reporting.Reporter(location=app_config.data_store, write_to_stdout=app_config.write_stdout)
+
 class Ornithokrites(object):
     
     def run(self):

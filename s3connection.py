@@ -12,6 +12,39 @@ import sys
 import logging
 import boto
 
+class RecordingsFetcher(object):
+    """ Class for getting WAVE recordings from a given S3 bucket """
+    def __init__(self, output_recordings_dir='./Recordings/'):
+        self._output_recordings_dir = output_recordings_dir
+        self._log = logging.getLogger('log.html') 
+            
+    def connect_to_bucket(self, bucket_name='kiwicalldata'):
+        try:
+            self._log.info('Connecting to S3 ...')
+            s3 = boto.connect_s3()
+        except:
+            self._log.critical('Failure while connecting to S3. Check credentials.')
+            sys.exit(1)
+        try:
+            self._log.info('Connection established. Fetching bucket %s...', bucket_name)
+            self.Bucket = s3.get_bucket(bucket_name)
+        except:
+            self._log.critical('Failure while connecting to bucket. Check if bucket exists.')
+            sys.exit(1)
+            
+        self._log.info('Bucket ready.')
+        
+        return self.Bucket
+        
+    def get_next_recording(self):
+        for key in self.Bucket.list():
+            if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
+                print 'Downloading %s' % key.name
+                path = os.path.join(self._output_recordings_dir, key.name)
+                _make_sure_dir_exists(path)
+                yield key.get_contents_to_filename(path)                
+        
+
 def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/'):
     """ 
     Downloads data from bucket to the specified directory.
@@ -35,7 +68,7 @@ def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/')
         log.info('Connecting to S3 ...')
         s3 = boto.connect_s3()
     except:
-	logging.critical('Failure while connecting to S3. Check credentials.')
+        logging.critical('Failure while connecting to S3. Check credentials.')
         sys.exit(1)
     try:
         log.info('Connection established. Fetching bucket %s...', bucket_name)
@@ -60,4 +93,4 @@ def _make_sure_dir_exists(filename):
 
 """ Test """
 if __name__ == '__main__':
-    read_data()
+    fetcher = RecordingsFetcher()
