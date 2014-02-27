@@ -27,7 +27,7 @@ class Ornithokrites(object):
             noise_remover = noise_reduction.NoiseRemover()
             try:
                 filtered_sample = noise_remover.remove_noise(sample, rate)
-            except ValueError:
+            except:
                 filtered_sample = sample
         
             segmented_sounds = noise_remover.segmentator.get_segmented_sounds()
