@@ -12,14 +12,82 @@ import sys
 import logging
 import boto
 import scipy.io.wavfile as wav
+import Tkinter, tkFileDialog
 
 class RecordingsFetcher(object):
     """ Class for getting WAVE recordings from a given S3 bucket """
-    def __init__(self, data_store='./Recordings/'):
-        self._output_recordings_dir = data_store
+    def __init__(self):
         self._log = logging.getLogger('log.html')
+        
+    def get_next_recording(self, bucket_name, data_store):
+        """
+        Generator for getting WAVE files. The data will be provided on-demand basis.
+        
+        Parameters
+        -------------
+        bucket_name : string
+            Name of AWS S3 bucket. If none provided then it is assumed data is available locally.
+        data_store : string
+            In case bucket name is provided, this location will be used for storing the data.
+            Once a recording is there, or no bucket was provided, from this place data will be 
+            read recursively. In none provided, then user has to select a single file through 
+            a file dialog.
             
-    def connect_to_bucket(self, bucket_name='kiwicalldata'):
+        Returns
+        ------------
+        samplerate : int
+            Rate of the sample in Hz
+        sample : 1-d array
+            Wave file read as numpy array of int16
+        name : string
+            Name of a wave file
+        """            
+        if bucket_name: # Download data from a bucket
+            self._connect_to_bucket(bucket_name)
+            for key in self.Bucket.list():
+                if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
+                    # self._log.info('Downloading %s', key.name)
+                    path = os.path.join(data_store, key.name)
+                    _make_sure_dir_exists(path)
+                    key.get_contents_to_filename(path) # Download the file
+                    (rate, sample) = wav.read(path)
+                    yield rate, sample, path
+        elif data_store: # Get locally stored data
+            for dirpath, dirnames, filenames in os.walk(data_store):
+                for filename in [f for f in filenames if f.endswith('.wav')]:
+                    path = os.path.join(dirpath, filename)
+                    (rate, sample) = wav.read(path)
+                    yield rate, sample, path
+        else: # Interactive mode - let user select a signle file
+            root = Tkinter.Tk()
+            root.withdraw()
+            filename = tkFileDialog.askopenfilename()
+            (rate, sample) = wav.read(path)
+            yield rate, sample, path
+
+    def get_all_recordings_from_bucket(self, bucket_name, data_store):
+        """
+        Parameters
+        -------------
+        bucket_name : string
+            Name of AWS S3 bucket.
+        data_store : string
+            Here the data will be downloaded.
+            
+        Returns
+        ------------
+        Nothing
+        """            
+        self._connect_to_bucket(bucket_name)
+        for key in self.Bucket.list():
+            if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
+                self._log.info('Downloading %s', key.name)
+                print 'Downloading %s', key.name
+                path = os.path.join(data_store, key.name)
+                _make_sure_dir_exists(path)
+                key.get_contents_to_filename(path) # Download the file         
+            
+    def _connect_to_bucket(self, bucket_name):
         try:
             self._log.info('Connecting to S3 ...')
             s3 = boto.connect_s3()
@@ -37,57 +105,6 @@ class RecordingsFetcher(object):
         
         return self.Bucket
         
-    def get_next_recording(self):
-        for key in self.Bucket.list():
-            if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-                self._log.info('Downloading %s', key.name)
-                path = os.path.join(self._output_recordings_dir, key.name)
-                _make_sure_dir_exists(path)
-                key.get_contents_to_filename(path)
-                (rate, sample) = wav.read(path)
-                yield rate, sample, path     
-        
-
-def read_data(bucket_name='kiwicalldata', output_recordings_dir='./Recordings/'):
-    """ 
-    Downloads data from bucket to the specified directory.
-    
-    Parameters
-    ----------
-    bucket_name : string (default = 'kiwicalldata')
-        Name of a S3 bucket to connect.
-    output_recordings_dir : string (default = './Recordings/')
-        Output directory where downloaded data will be stored. If directory
-        does not exist it will be created recursively.
-        
-    Returns
-    -------
-    Nothing
-    """
-    log = logging.getLogger('log.html') 
-    devlog = logging.getLogger('devlog.html') 
-        
-    try:
-        log.info('Connecting to S3 ...')
-        s3 = boto.connect_s3()
-    except:
-        logging.critical('Failure while connecting to S3. Check credentials.')
-        sys.exit(1)
-    try:
-        log.info('Connection established. Fetching bucket %s...', bucket_name)
-        bucket = s3.get_bucket(bucket_name)
-    except:
-        log.critical('Failure while connecting to bucket. Check if bucket exists.')
-        sys.exit(1)    
-    
-    log.info('Bucket ready. Getting data ...')
-    for key in bucket.list():
-        if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-            devlog.info('Downloading %s', key.name)
-            path = os.path.join(output_recordings_dir, key.name)
-            _make_sure_dir_exists(path)
-            key.get_contents_to_filename(path)
-            
 def _make_sure_dir_exists(filename):
     # Create recursively directory if it does not exist.
     dir_name = os.path.dirname(filename)
@@ -96,14 +113,11 @@ def _make_sure_dir_exists(filename):
 
 """ Test """
 if __name__ == '__main__':
-    fetcher = RecordingsFetcher('TestRecordings')
-    fetcher.connect_to_bucket()
-    
+    fetcher = RecordingsFetcher()
     log = logging.getLogger('log.html') 
     log.addHandler(logging.StreamHandler())
     
-    for rate, sample, path in fetcher.get_next_recording():
-        print path, ' ', rate
+    fetcher.get_all_recordings_from_bucket('kiwicalldata', 'Test')
         
     
     

@@ -27,11 +27,11 @@ class MassiveOrnithokrites(object):
         app_config = configuration.Configurator().parse_arguments()
         reporter = reporting.Reporter(location=app_config.data_store, write_to_stdout=app_config.write_stdout)
         kiwi_finder = identification.KiwiFinder()
-        fetcher = s3connection.RecordingsFetcher(data_store=app_config.data_store)
-        fetcher.connect_to_bucket(bucket_name=app_config.bucket)
+        noise_remover = noise_reduction.NoiseRemover()
+        fetcher = s3connection.RecordingsFetcher()
     
-        for rate, sample, sample_name in fetcher.get_next_recording(): 
-            noise_remover = noise_reduction.NoiseRemover()
+        for rate, sample, sample_name in fetcher.get_next_recording(data_store=app_config.data_store, 
+                                                                    bucket_name=app_config.bucket): 
             try:
                 filtered_sample = noise_remover.remove_noise(sample, rate)
             except:
@@ -44,7 +44,8 @@ class MassiveOrnithokrites(object):
             
             kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = kiwi_finder.find_kiwi(kiwi_calls)
-            reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample, rate, segmented_sounds, app_config.keep_data)
+            reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample, 
+                                   rate, segmented_sounds, app_config.keep_data)
 
 
 class Ornithokrites(object):

@@ -8,17 +8,14 @@ Audio segmentation module.
 """
 
 import numpy as np
-import recordings_io
 from aubio import onset
 from collections import OrderedDict
 
 class OnsetDetector(object):
-    """ Wrapper class for aubio onset detector class """
+    """ Wrapper class for Aubio onset detector class """
     
     def __init__(self, detector_type, threshold, window_size):
         """ 
-        Initialize wrapper
-        
         Parameters
         ----------
         window_size : int
@@ -207,6 +204,8 @@ class Segmentator(object):
                 end_silence = len(sample)         
                 silence_intervals[end_silence - start_silence] = (start_silence, end_silence)
             
+            # If there is only one long silence interval, split it into two: otherwise there will
+            # be too much averaging
             if len(silence_intervals) == 1 and silence_intervals.iterkeys().next() > 6 * sample_rate:
                 item = silence_intervals.popitem()
                 len1 = item[0] / 2
@@ -217,8 +216,13 @@ class Segmentator(object):
                 end2 = item[1][1]              
                 silence_intervals[len1] = (start1, end1)
                 silence_intervals[len2] = (start2, end2)
-            
-            self._sorted_silence_intervals = OrderedDict(sorted(silence_intervals.items(), key=lambda t: t[0]))
+                
+            if silence_intervals:
+                self._sorted_silence_intervals = OrderedDict(sorted(silence_intervals.items(), key=lambda t: t[0]))
+            else:
+                self._sorted_silence_intervals = {}
+        else:
+            self._sorted_silence_intervals = {}
             
     def get_onsets(self):
         """ Return previously computed onsets """
@@ -243,29 +247,3 @@ class Segmentator(object):
     def get_number_of_silence_intervals(self):
         return len(self._sorted_silence_intervals)
             
-
-""" An example """
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import noise_reduction as nr
-    
-    path_recordings = '/home/tracek/Ptaszki/Recordings/female/RFPT-LPA-20111126214502-240-60-KR6.wav'
-    # path_recordings = '/home/tracek/Ptaszki/Recordings/female/RFPT-WW17-20111113213002-420-60-KR4.wav'
-    (rate, sample) = recordings_io.read(path_recordings)
-    sample = nr.highpass_filter(sample, rate, 1000)
-    segmentator = Segmentator()
-    segmentator.process(sample, rate)
-    onsets = segmentator.get_onsets()
-
-    segmented_sounds = segmentator.get_segmented_sounds()
-    
-    plt.specgram(sample, NFFT=2**11, Fs=rate)
-    for start, end in segmented_sounds:
-        start /= rate
-        end /= rate
-        plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2)
-        plt.plot([end, end], [0, 4000], lw=1, c='g', alpha=0.4)
-    plt.axis('tight')
-    plt.show()
-    
-    

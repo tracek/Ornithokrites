@@ -9,33 +9,9 @@ Module for handling recordings' input and output.
 
 from __future__ import division
 import os
-import logging
-import Tkinter, tkFileDialog
 import numpy as np
 import nose.tools as nt
 import scipy.io.wavfile as wav
-import s3connection
-
-def get_data(bucket, data_store):
-    if bucket:
-        s3connection.read_data(bucket_name=bucket, output_recordings_dir=data_store)
-    if not data_store:
-        root = Tkinter.Tk()
-        root.withdraw()
-        data_store = tkFileDialog.askopenfilename()
-        
-    
-def get_recordings_walker(data_store, bucket):
-    """ Returns recordings walker """
-    if bucket:
-        s3connection.read_data(bucket_name=bucket, output_recordings_dir=data_store)
-    if not data_store:
-        root = Tkinter.Tk()
-        root.withdraw()
-        data_store = tkFileDialog.askopenfilename()
-        
-    walker = Walker(data_store)
-    return walker
 
 def read(path):
     """ Read wave file from the given path """
@@ -106,7 +82,7 @@ class Walker(object):
             self._recordings.append(recordings_location)        
         
         for dirpath, dirnames, filenames in os.walk(recordings_location):
-            for filename in [f for f in filenames if f.endswith('.wav') and not f.endswith('_seg.wav')]:
+            for filename in [f for f in filenames if f.endswith('.wav')]:
                 self._recordings.append(os.path.join(dirpath, filename))
                 
         nt.assert_true(self._recordings, "No recordings found!")
