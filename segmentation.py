@@ -147,6 +147,11 @@ class Segmentator(object):
     
     def process(self, sample, sample_rate):
         """ Perform segmentation on a sample """
+        # silence_intervals are arranged as following:
+        # (A, (X, Y))
+        # A - length of the interval
+        # (X, Y) - tuple with start and end of the interval
+        self._silence_intervals = []        
         # Calculate onsets
         self._onsets = self._onset_detector.calculate_onsets(sample, sample_rate)
         if (self._onsets):                     
@@ -160,11 +165,6 @@ class Segmentator(object):
             # Segments with detected signal (non-noise)
             self._sounds = [] 
             
-            # Segments without signal (noise). Dictionary is arranged as following:
-            # Key - length of the interval
-            # Value - tuple with start and end of the interval
-            silence_intervals = {} 
-            
             # Perform segmentation
             silence_min = 4 * sample_rate # Minimal accepted silence length
             for onset, next_onset in zip(self._onsets, self._onsets[1:]):
@@ -173,7 +173,7 @@ class Segmentator(object):
                 if distance_next_onset > silence_min:
                     start_silence = onset + 2 * sample_rate # Safety margin
                     end_silence = next_onset - sample_rate  # Safety margin
-                    silence_intervals[end_silence - start_silence] = (start_silence, end_silence)
+                    self._silence_intervals.append((end_silence - start_silence, (start_silence, end_silence)))
                 # Compute sounds intervals
                 start_sound = onset - delay
                 if distance_next_onset < desired_length:
@@ -196,33 +196,29 @@ class Segmentator(object):
             if distance_to_1st_onset > silence_min_start:
                 start_silence = 0
                 end_silence = distance_to_1st_onset - sample_rate
-                silence_intervals[end_silence - start_silence] = (start_silence, end_silence)
+                self._silence_intervals.append((end_silence - start_silence, (start_silence, end_silence)))
                 
             distance_after_last_onset = len(sample) - self._onsets[-1] 
             if distance_after_last_onset > silence_min_end:
                 start_silence = self._onsets[-1] + 2 * sample_rate
                 end_silence = len(sample)         
-                silence_intervals[end_silence - start_silence] = (start_silence, end_silence)
+                self._silence_intervals.append((end_silence - start_silence, (start_silence, end_silence)))
             
             # If there is only one long silence interval, split it into two: otherwise there will
             # be too much averaging
-            if len(silence_intervals) == 1 and silence_intervals.iterkeys().next() > 6 * sample_rate:
-                item = silence_intervals.popitem()
+            if len(self._silence_intervals) == 1 and max(self._silence_intervals,key=lambda item:item[0])[0] > 6 * sample_rate:
+                item = self._silence_intervals.pop()
                 len1 = item[0] / 2
                 start1 = item[1][0]
                 end1 = start1 + len1
                 len2 = item[0] / 2 + 1
                 start2 = end1
                 end2 = item[1][1]              
-                silence_intervals[len1] = (start1, end1)
-                silence_intervals[len2] = (start2, end2)
+                self._silence_intervals.append((len1, (start1, end1)))
+                self._silence_intervals.append((len2, (start2, end2)))
                 
-            if silence_intervals:
-                self._sorted_silence_intervals = OrderedDict(sorted(silence_intervals.items(), key=lambda t: t[0]))
-            else:
-                self._sorted_silence_intervals = {}
-        else:
-            self._sorted_silence_intervals = {}
+            if self._silence_intervals:
+                self._silence_intervals.sort(key=lambda item:item[0])
             
     def get_onsets(self):
         """ Return previously computed onsets """
@@ -232,18 +228,13 @@ class Segmentator(object):
         """ Return previously computed sounds (i.e. non-noise signal) """
         return self._sounds
         
-    def get_silence(self):
-        """ Return dictionary with computed silence intervals sorted
-            from lowest to highest """
-        return self._sorted_silence_intervals        
-        
     def get_next_silence(self, sample):
         """ Silence intervals are sorted from longest to shortest
             This function returns next longest silence interval,
             i.e. touple with start and end position, from the dictionary """
-        start, end = self._sorted_silence_intervals.popitem()[1] # 
+        start, end = self._silence_intervals.pop()[1] 
         return sample[start:end]
         
     def get_number_of_silence_intervals(self):
-        return len(self._sorted_silence_intervals)
+        return len(self._silence_intervals)
             
