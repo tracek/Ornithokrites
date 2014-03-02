@@ -65,27 +65,55 @@ class RecordingsFetcher(object):
             (rate, sample) = wav.read(path)
             yield rate, sample, path
 
-    def get_all_recordings_from_bucket(self, bucket_name, data_store):
+            
+    def get_recordings(self, app_config, inq):
         """
+        Generator for getting WAVE files. The data will be provided on-demand basis.
+        
         Parameters
         -------------
         bucket_name : string
-            Name of AWS S3 bucket.
+            Name of AWS S3 bucket. If none provided then it is assumed data is available locally.
         data_store : string
-            Here the data will be downloaded.
+            In case bucket name is provided, this location will be used for storing the data.
+            Once a recording is there, or no bucket was provided, from this place data will be 
+            read recursively. In none provided, then user has to select a single file through 
+            a file dialog.
             
         Returns
         ------------
-        Nothing
+        samplerate : int
+            Rate of the sample in Hz
+        sample : 1-d array
+            Wave file read as numpy array of int16
+        name : string
+            Name of a wave file
         """            
-        self._connect_to_bucket(bucket_name)
-        for key in self.Bucket.list():
-            if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-                self._log.info('Downloading %s', key.name)
-                print 'Downloading %s', key.name
-                path = os.path.join(data_store, key.name)
-                _make_sure_dir_exists(path)
-                key.get_contents_to_filename(path) # Download the file         
+        if app_config.bucket: # Download data from a bucket
+            self._connect_to_bucket(app_config.bucket)
+            for key in self.Bucket.list():
+                if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
+                    self._log.info('Downloading %s', key.name)
+                    path = os.path.join(app_config.data_store, key.name)
+                    _make_sure_dir_exists(path)
+                    key.get_contents_to_filename(path) # Download the file   
+                    (rate, sample) = wav.read(path)
+                    inq.put((rate, sample, path))
+        elif app_config.data_store: # Get locally stored data
+            for dirpath, dirnames, filenames in os.walk(app_config.data_store):
+                for filename in [f for f in filenames if f.endswith('.wav')]:
+                    path = os.path.join(dirpath, filename)
+                    (rate, sample) = wav.read(path)
+                    inq.put((rate, sample, path))
+        else: # Interactive mode - parallel processing on one file makes no sense ...
+            root = Tkinter.Tk()
+            root.withdraw()
+            filename = tkFileDialog.askopenfilename()
+            (rate, sample) = wav.read(path)
+            inq.put((rate, sample, path))
+            
+        for i in range(app_config.no_processes):
+            inq.put("STOP")            
             
     def _connect_to_bucket(self, bucket_name):
         try:
