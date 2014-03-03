@@ -42,7 +42,7 @@ class Ornithokrites(object):
             kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
             self.reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample, 
-                                        rate, segmented_sounds, app_config.keep_data)
+                                        rate, segmented_sounds, app_config.delete_data)
         self.reporter.cleanup()
         
 class ParallelOrnithokrites(object):

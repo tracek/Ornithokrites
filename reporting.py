@@ -54,18 +54,19 @@ class Reporter(object):
             logger.addHandler(logging.StreamHandler()) # for standard output (console)
         return logger
 
-    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, keep_data):
+    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, delete_data):
         # sample_name_with_dir = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]              
         self.Log.info('%s: %s' % (filename.replace('/Recordings',''), kiwi_result))
         
         self.DevLog.info('<h2>%s</h2>' % kiwi_result)
         self.DevLog.info('<h2>%s</h2>' % filename.replace('/Recordings',''))
         
-        if keep_data:
-            self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
-                         filename.replace('/var/www/','').replace('/Recordings',''))
-        else:
+        if delete_data:
             os.remove(filename)
+        else:
+            self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
+                         filename.replace('/var/www/','').replace('/Recordings',''))            
+            
         
         # Plot spectrogram
         plt.ioff()
@@ -99,12 +100,12 @@ class Reporter(object):
                 self.DevLog.info('<h2>%s</h2>' % kiwi_result)
                 self.DevLog.info('<h2>%s</h2>' % filename.replace('/Recordings',''))
                 
-                if app_config.keep_data:
-                    self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
-                                 filename.replace('/var/www/','').replace('/Recordings',''))
-                else:
+                if app_config.delete_data:
                     os.remove(filename)
-                
+                else:
+                    self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
+                                 filename.replace('/var/www/','').replace('/Recordings',''))                    
+                    
                 if app_config.with_spectrogram:
                     # Plot spectrogram
                     plt.ioff()
