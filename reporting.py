@@ -17,7 +17,7 @@ import time
 
 class Reporter(object):
     
-    def __init__(self, location, write_to_stdout):
+    def __init__(self, app_config):
         """
         Reporting results to the user
         
@@ -37,8 +37,8 @@ class Reporter(object):
                 root.removeHandler(handler)  
         self.cleanup()
         # and create our logs
-        self.Log = self._create_logger('log.html', location, write_to_stdout)
-        self.DevLog = self._create_logger('devlog.html', location)      
+        self.Log = self._create_logger('log.html', app_config.data_store, app_config.write_stdout)
+        self.DevLog = self._create_logger('devlog.html', app_config.data_store)      
 
     def _create_logger(self, name, path, stdout=False):
         if not os.path.exists(path):

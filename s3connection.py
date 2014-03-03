@@ -68,7 +68,7 @@ class RecordingsFetcher(object):
             
     def get_recordings(self, app_config, inq):
         """
-        Generator for getting WAVE files. The data will be provided on-demand basis.
+        Get data from selected location and pass it to the queue
         
         Parameters
         -------------
@@ -79,6 +79,8 @@ class RecordingsFetcher(object):
             Once a recording is there, or no bucket was provided, from this place data will be 
             read recursively. In none provided, then user has to select a single file through 
             a file dialog.
+        inq : multiprocessing.Queue
+            The recordings shall be put on the queue
             
         Returns
         ------------
@@ -139,13 +141,6 @@ def _make_sure_dir_exists(filename):
     if not os.path.exists( dir_name ):
         os.makedirs( dir_name )
 
-""" Test """
-if __name__ == '__main__':
-    fetcher = RecordingsFetcher()
-    log = logging.getLogger('log.html') 
-    log.addHandler(logging.StreamHandler())
-    
-    fetcher.get_all_recordings_from_bucket('kiwicalldata', 'Test')
         
     
     
