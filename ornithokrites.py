@@ -24,7 +24,7 @@ class Ornithokrites(object):
     def __init__(self, app_config):
         self.app_config = app_config
         self.reporter = reporting.Reporter(app_config)
-        self.kiwi_finder = identification.KiwiFinder()
+        self.kiwi_finder = identification.KiwiFinder(app_config)
         self.noise_remover = noise_reduction.NoiseRemover()
         self.fetcher = s3connection.RecordingsFetcher()        
     def run(self):
@@ -37,8 +37,8 @@ class Ornithokrites(object):
         
             segmented_sounds = self.noise_remover.segmentator.get_segmented_sounds()
             
-            feature_extractor = features.FeatureExtractor()
-            extracted_features = feature_extractor.process(filtered_sample, rate, segmented_sounds)
+            feature_extractor = features.FeatureExtractor(app_config, rate)
+            extracted_features = feature_extractor.process(filtered_sample, segmented_sounds)
             
             kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
