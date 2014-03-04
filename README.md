@@ -2,6 +2,12 @@ Ornithokrites
 ============
 Ornithokrites is a transliteration of ancient Greek όρνϊθοκρίτης, meaning interpreter of flight or cries of birds. With its rather ambitious name, the program itself is a tool meant for an automatic identification of kiwi calls from low quality audio recordings. It has been designed to cope with large variations of environmental conditions and low quality of input data. For each provided audio file, the program enables detection of any kiwi calls and, in case they are present, which gender they belong to (male, female or both).
 
+Features
+=============
+- **Reliable**: stratified 5-fold cross-validation on 206 samples gives the program 97% accuracy.
+- **Easy to use**: no installation needed. User can log-in to a web site, provide Amazon Web Services bucket name and execute the program with one click. If in doubt a detailed report is available, containing spectrogram with marked kiwi calls and option to play the audio file in question. This way it should be easy to verify correctness of results. The program resides on Amazon EC2 instance, so getting data from S3 buckets is fast. When things go awry (and they will) I can directly debug and fix issues on the server.
+- **Fast**: Sort of. The application spawns separate processes for getting recordings, writing results and calculations. Calculations are done on one or more processes, typically equal to number of cores. On my Core-i5 @3.40GHz it takes 1m40s to process 206 files.
+
 Usage
 ==============
 Expected input are monaural (single-channel) audio files in Waveform Audio File Format (commonly known as WAV or WAVE). The following sections explain two ways of running the program: user-friendly (Web Interface) and user-hostile (install-yourself).
@@ -45,12 +51,6 @@ After the recordings are ready following steps take place:
 5. **Perform kiwi identification**. At this stage Audio Features are extracted from the recording. Based on these, a Machine Learning algorithm, that is Support Vector Machine (SVM), will try to classify ROI as kiwi male, kiwi female and not a kiwi. Additional rules are then applied, employing our knowledge on repetitive character of kiwi calls. Only in case a sufficiently long set of calls is identified, the kiwi presence is marked. 
 6. **Report**. Algorithm output can be: female, male, male and female and no kiwi detected.
 
-
-Validation results
-=============
-Program was tested on 161 samples using stratified [5-fold cross-validation](http://en.wikipedia.org/wiki/Cross-validation_\%28statistics\%29). Per Region Of Interest model got 93% accuracy in distinguishing between a kiwi and "not a kiwi", and 90% overall accuracy. Per file, those numbers raise to 99% and 97% respectively, which is possible due to employment of the most prominent feature of kiwi calls: their repetitive character. 
-
-Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz.
 
 Dependencies
 =============
