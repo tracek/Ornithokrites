@@ -43,7 +43,7 @@ class Ornithokrites(object):
             kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
             self.reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample, 
-                                        rate, segmented_sounds, app_config.delete_data)
+                                        rate, segmented_sounds)
         self.reporter.cleanup()
         
 class ParallelOrnithokrites(object):
@@ -62,7 +62,7 @@ class ParallelOrnithokrites(object):
         self.process_in = multiprocessing.Process(target=s3connection.RecordingsFetcher().get_recordings, 
                                                   args=(app_config, self.recordings_q))
         self.process_out = multiprocessing.Process(target=reporter.write_results_parallel,
-                                                   args=(app_config, self.output_q))
+                                                   args=(self.output_q,))
         self.process_kiwi = [multiprocessing.Process(target=self.worker, args=()) for i in range(app_config.no_processes)]                                   
     
     def run(self):      

@@ -38,7 +38,8 @@ class Reporter(object):
         self.cleanup()
         # and create our logs
         self.Log = self._create_logger('log.html', app_config.data_store, app_config.write_stdout)
-        self.DevLog = self._create_logger('devlog.html', app_config.data_store)      
+        self.DevLog = self._create_logger('devlog.html', app_config.data_store)
+        self._config = app_config
 
     def _create_logger(self, name, path, stdout=False):
         if not os.path.exists(path):
@@ -54,14 +55,14 @@ class Reporter(object):
             logger.addHandler(logging.StreamHandler()) # for standard output (console)
         return logger
 
-    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, delete_data):
+    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds):
         # sample_name_with_dir = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]              
         self.Log.info('%s: %s' % (filename, kiwi_result))
         
         self.DevLog.info('<h2>%s</h2>' % kiwi_result)
         self.DevLog.info('<h2>%s</h2>' % filename.replace('/var/www/results/',''))
         
-        if delete_data:
+        if self._config.delete_data:
             os.remove(filename)
         else:
             self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
@@ -92,21 +93,21 @@ class Reporter(object):
         self.DevLog.info('<img src="%s" alt="Spectrogram">', path)
         self.DevLog.info('<hr>')
         
-    def write_results_parallel(self, app_config, outq):
-        for works in range(app_config.no_processes):
+    def write_results_parallel(self, outq):
+        for works in range(self._config.no_processes):
             for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds in iter(outq.get, "STOP"):
-                self.Log.info('%s: %s' % (filename, kiwi_result))
+                self.Log.info('%s: %s' % (filename.replace('/var/www/results/',''), kiwi_result))
                 
                 self.DevLog.info('<h2>%s</h2>' % kiwi_result)
-                self.DevLog.info('<h2>%s</h2>' % filename)
+                self.DevLog.info('<h2>%s</h2>' % filename.replace('/var/www/results/',''))
                 
-                if app_config.delete_data:
+                if self._config.delete_data:
                     os.remove(filename)
                 else:
                     self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', 
                                  filename.replace('/var/www/',''))                    
                     
-                if app_config.with_spectrogram:
+                if self._config.with_spectrogram:
                     # Plot spectrogram
                     plt.ioff()
                     plt.specgram(audio, NFFT=2**11, Fs=rate)
@@ -132,8 +133,8 @@ class Reporter(object):
                     
                 self.DevLog.info('<hr>')
         
-        if app_config.mail:
-            self.send_email(app_config.mail)
+        if self._config.mail:
+            self.send_email()
         self.cleanup()
         
     def cleanup(self):
@@ -145,11 +146,12 @@ class Reporter(object):
         devlog.handlers = []
         logging.shutdown()
     
-    def send_email(self, address):
-        with open ("reporting.config", "r") as credentials:
+    def send_email(self):
+        email_credentials_location = os.path.join(self._config.program_directory, "reporting.config")
+        with open (email_credentials_location, "r") as credentials:
             (gmail_user, gmail_pwd) = credentials.read().splitlines()
         FROM = 'Kiwi-Finder no-reply'
-        TO = [address, 'lukasz.tracewski@gmail.com'] #must be a list
+        TO = [self._config.mail, 'lukasz.tracewski@gmail.com'] #must be a list
         SUBJECT = "Kiwi-Finder: your data is ready"
         TEXT = """
                Kiwi-Finder.info has finished processing your recordings.
