@@ -68,7 +68,7 @@ class RecordingsFetcher(object):
             
     def get_recordings(self, app_config, inq):
         """
-        Get data from selected location and pass it to the queue
+        Get data from selected location and pass it to the queue.
         
         Parameters
         -------------
@@ -80,22 +80,22 @@ class RecordingsFetcher(object):
             read recursively. In none provided, then user has to select a single file through 
             a file dialog.
         inq : multiprocessing.Queue
-            The recordings shall be put on the queue
+            The recordings shall be put on the queue.
             
         Returns
         ------------
         samplerate : int
-            Rate of the sample in Hz
+            Rate of the sample in Hz.
         sample : 1-d array
-            Wave file read as numpy array of int16
+            Wave file read as numpy array of int16.
         name : string
-            Name of a wave file
+            Name of a wave file.
         """            
         if app_config.bucket: # Download data from a bucket
             self._connect_to_bucket(app_config.bucket)
             for key in self.Bucket.list():
                 if key.name.endswith('.wav') and not key.name.startswith('5mincounts'):
-                    self._log.info('Downloading %s', key.name)
+                    # self._log.info('Downloading %s', key.name)
                     path = os.path.join(app_config.data_store, key.name)
                     _make_sure_dir_exists(path)
                     key.get_contents_to_filename(path) # Download the file   

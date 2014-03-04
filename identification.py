@@ -7,16 +7,20 @@ Created on Sat Feb 22 17:25:36 2014
 Module for identification of kiwi calls
 """
 
+import os
 import pickle
 import numpy as np
 
 class KiwiFinder(object):
     """ Identification of kiwi calls """
     
-    def __init__(self):
+    def __init__(self, app_config):
         """ Initialize Supervise Vector Machine with Gaussian kernel """
-        self._model = pickle.load(open('model.pkl', 'rb'))
-        self._scaler = pickle.load(open('scaler.pkl', 'rb'))
+        model_path = os.path.join(app_config.program_directory, 'model.pkl')
+        scaler_path = os.path.join(app_config.program_directory, 'scaler.pkl')
+        with open(model_path, 'rb') as model_loader, open(scaler_path, 'rb') as scaler_loader:
+            self._model = pickle.load(model_loader)
+            self._scaler = pickle.load(scaler_loader)
         self.KiwiCounts = {'Male': 0, 'Female': 0, 'Male and Female': 0, 'None': 0}
         
     def _look_for_consecutive_calls(self, P, no_consecutive_calls=4):

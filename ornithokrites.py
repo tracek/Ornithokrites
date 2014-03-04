@@ -22,6 +22,7 @@ class Ornithokrites(object):
     processed. 
     """
     def __init__(self, app_config):
+        self.app_config = app_config
         self.reporter = reporting.Reporter(app_config)
         self.kiwi_finder = identification.KiwiFinder()
         self.noise_remover = noise_reduction.NoiseRemover()
@@ -51,6 +52,7 @@ class ParallelOrnithokrites(object):
     handle the processing. Each worker shall submit its results to an output queue. 
     """
     def __init__(self, app_config):
+        self.app_config = app_config
         reporter = reporting.Reporter(app_config)
         recordings_buffer_size = app_config.no_processes * 4 # only this number of recordings will be acquired
         
@@ -74,8 +76,9 @@ class ParallelOrnithokrites(object):
         self.process_out.join()
         
     def worker(self):
-        kiwi_finder = identification.KiwiFinder()
+        kiwi_finder = identification.KiwiFinder(self.app_config)
         noise_remover = noise_reduction.NoiseRemover()
+        
         for rate, sample, sample_name in iter(self.recordings_q.get, "STOP"): 
             try:
                 filtered_sample = noise_remover.remove_noise(sample, rate)
@@ -83,9 +86,8 @@ class ParallelOrnithokrites(object):
                 filtered_sample = sample
         
             segmented_sounds = noise_remover.segmentator.get_segmented_sounds()
-            
-            feature_extractor = features.FeatureExtractor()
-            extracted_features = feature_extractor.process(filtered_sample, rate, segmented_sounds)
+            feature_extractor = features.FeatureExtractor(self.app_config, rate)    
+            extracted_features = feature_extractor.process(signal=filtered_sample, segments=segmented_sounds)
             
             kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = kiwi_finder.find_kiwi(kiwi_calls)

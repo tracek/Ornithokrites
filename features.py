@@ -5,7 +5,7 @@ Created on Mon Dec 02 12:07:49 2013
 @author: ltracews
 """
 
-import sys
+import sys, os
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,28 +13,30 @@ import yaafelib
 #import wavelets
 
 class FeatureExtractor(object):
-
-    def process(self, signal, rate, segments, wavelet_decomposition_level=6, frame_overlap=512, wavelet_type='sym10'):
-        """ Extract features """
-        
+    
+    def __init__(self, app_config, rate):
         self.ExtractedFeaturesList = ['LPC1_mean', 'LSF7_min', 'SpectralFlatness_min',
                                       'SSS_centroid_min', 'SSS_spread_min', 'PerceptualSpread_min',
                                       'SpectralSlope_min', 'PerceptualSharpness_min', 'SpectralDecrease_max',
-                                      'OBSI0_mm', 'SpectralRolloff_min']
+                                      'OBSI0_mm', 'SpectralRolloff_min']        
+        self._rate = rate
+        feature_plan = yaafelib.FeaturePlan(sample_rate=rate)
+        feature_plan_path = os.path.join(app_config.program_directory, 'features.config')
+        success = feature_plan.loadFeaturePlan(feature_plan_path)
+        if not success:
+            sys.exit('Feature plan not loaded correctly')
+        self._engine = yaafelib.Engine()
+        self._engine.load(feature_plan.getDataFlow())    
+        
+    def process(self, signal, segments, wavelet_decomposition_level=6, frame_overlap=512, wavelet_type='sym10'):
+        """ Extract features """
  
         self._signal = signal
-        self._rate = rate
         self._segments = segments
 
         """ Calculate spectral and temporal features """
-        feature_plan = yaafelib.FeaturePlan(sample_rate=rate)
-        success = feature_plan.loadFeaturePlan('features.config')
-        if not success:
-            sys.exit('Feature plan not loaded correctly')
 
-        engine = yaafelib.Engine()
-        engine.load(feature_plan.getDataFlow())    
-        self.Features = engine.processAudio(np.array([signal.astype('float64')]))
+        self.Features = self._engine.processAudio(np.array([signal.astype('float64')]))
         
         """ Initialize wavelet features
             Based on "Wavelets in Recognition of Bird Sounds" by A. Selin et al.
