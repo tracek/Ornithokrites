@@ -4,9 +4,9 @@ Ornithokrites is a transliteration of ancient Greek όρνϊθοκρίτης, me
 
 Features
 =============
-- **Reliable**: stratified 5-fold cross-validation on 206 samples gives the program 97% accuracy.
+- **Reliable**: stratified 5-fold cross-validation on 206 recordings gives the program 97% accuracy.
 - **Easy to use**: no installation needed. User can log-in to a web site, provide Amazon Web Services bucket name and execute the program with one click. If in doubt a detailed report is available, containing spectrogram with marked kiwi calls and option to play the audio file in question. This way it should be easy to verify correctness of results. The program resides on Amazon EC2 instance, so getting data from S3 buckets is fast. When things go awry (and they will) I can directly debug and fix issues on the server.
-- **Fast**: Sort of. The application spawns separate processes for getting recordings, writing results and calculations. Calculations are done on one or more processes, typically equal to number of cores. On my Core-i5 @3.40GHz it takes 1m40s to process 206 files.
+- **Fast**: Sort of. The application spawns separate processes for getting recordings, writing results and calculations. Calculations are done on one or more processes, typically equal to number of cores. On my Core-i5 @3.40GHz it takes 1m40s to process 206 one-minute long files.
 
 Usage
 ==============
