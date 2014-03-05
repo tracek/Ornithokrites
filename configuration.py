@@ -59,5 +59,4 @@ class Configurator(object):
         if not ivalue > 0:
              raise self._parser.ArgumentTypeError('%s is invalid. Number of processes must be a ' +
                  'positive value.' % value)
-        return ivalue
         
