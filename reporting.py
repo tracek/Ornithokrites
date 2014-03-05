@@ -7,13 +7,14 @@ Created on Sat Feb 22 18:05:56 2014
 Reporting module
 """
 
-import os
+import os, sys
 import logging
+import smtplib
+import time
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import smtplib
-import time
+
 
 class Reporter(object):
     
@@ -23,10 +24,8 @@ class Reporter(object):
         
         Parameters
         ----------
-        location : string
-            Absolute or relative path
-        write_to_stdout : bool
-            Should the output be also directed to standard output
+        app_config : AppConfig
+            AppConfig namedtuple defined in configuration.py
         """
         self.start_time = time.time() # Log start up time
         
@@ -55,8 +54,7 @@ class Reporter(object):
             logger.addHandler(logging.StreamHandler()) # for standard output (console)
         return logger
 
-    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds):
-        # sample_name_with_dir = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]              
+    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds):            
         self.Log.info('%s: %s' % (filename, kiwi_result))
         
         self.DevLog.info('<h2>%s</h2>' % kiwi_result)
@@ -95,8 +93,12 @@ class Reporter(object):
         
     def write_results_parallel(self, outq):
         for works in range(self._config.no_processes):
-            for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds in iter(outq.get, "STOP"):
+            for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, ex in iter(outq.get, "STOP"):
                 self.Log.info('%s: %s' % (filename.replace('/var/www/results/',''), kiwi_result))
+                
+                if ex:
+                    self.Log.exception('Problem encountered during noise reduction: %s', ex.message)
+                    self.DevLog.exception(ex)
                 
                 self.DevLog.info('<h2>%s</h2>' % kiwi_result)
                 self.DevLog.info('<h2>%s</h2>' % filename.replace('/var/www/results/',''))
@@ -148,6 +150,9 @@ class Reporter(object):
     
     def send_email(self):
         email_credentials_location = os.path.join(self._config.program_directory, "reporting.config")
+        if not os.path.isfile(email_credentials_location):
+            self.Log.error('Missing file %s with credentials. Sending e-mail has failed')
+            sys.exit(1)
         with open (email_credentials_location, "r") as credentials:
             (gmail_user, gmail_pwd) = credentials.read().splitlines()
         FROM = 'Kiwi-Finder no-reply'
@@ -173,7 +178,12 @@ class Reporter(object):
             server.sendmail(FROM, TO, message)
             #server.quit()
             server.close()
-            print 'successfully sent the mail'
-        except:
-            print "failed to send mail"    
+            self.Log.info('Sending e-mail to %s successful', self._config.mail)
+        except Exception, e:
+            self.log_exception(e)
+            
+    def log_exception(self, exception, message=''):
+        self.Log.info(message)
+        self.Log.exception(exception)
+        
     

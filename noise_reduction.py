@@ -22,21 +22,18 @@ class NoiseRemover(object):
         no_silence_intervals = self.segmentator.get_number_of_silence_intervals()
         
         out = signal
-#                
-#        w = wavelets.Wavelets()
-#        signal = w.denoise(signal)        
-#        
+
         if no_silence_intervals == 0:
             raise ValueError('Could not find any silence intervals')
         elif no_silence_intervals == 1:
             # Perform spectral subtraction on sample (not high-passed!)
             noise = self.segmentator.get_next_silence(signal) # Get silence period
-            out = ns.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+            out = ns.reduce_noise(signal, noise) # Perform spectral subtraction
         else:
             noise = self.segmentator.get_next_silence(signal) # Get silence period
-            out = ns.reduce_noise(signal, noise, 0) # Perform spectral subtraction
+            out = ns.reduce_noise(signal, noise) # Perform spectral subtraction
             noise = self.segmentator.get_next_silence(signal) # Try again
-            out = ns.reduce_noise(out, noise, 0) # Perform spectral subtraction           
+            out = ns.reduce_noise(out, noise) # Perform spectral subtraction           
         
         # Apply high-pass filter on spectral-subtracted sample
         out = highpass_filter(out, rate, 1500)

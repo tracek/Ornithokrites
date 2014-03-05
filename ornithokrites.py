@@ -32,8 +32,9 @@ class Ornithokrites(object):
                                                                          bucket_name=app_config.bucket): 
             try:
                 filtered_sample = self.noise_remover.remove_noise(sample, rate)
-            except:
+            except Exception, e: # All sorts of bad things can happen during noise removal
                 filtered_sample = sample
+                self.reporter.log_exception(e, 'Error while performing noise reduction')
         
             segmented_sounds = self.noise_remover.segmentator.get_segmented_sounds()
             
@@ -80,10 +81,12 @@ class ParallelOrnithokrites(object):
         noise_remover = noise_reduction.NoiseRemover()
         
         for rate, sample, sample_name in iter(self.recordings_q.get, "STOP"): 
+            exception = None
             try:
                 filtered_sample = noise_remover.remove_noise(sample, rate)
-            except:
+            except Exception, e:
                 filtered_sample = sample
+                exception = e
         
             segmented_sounds = noise_remover.segmentator.get_segmented_sounds()
             feature_extractor = features.FeatureExtractor(self.app_config, rate)    
@@ -91,7 +94,8 @@ class ParallelOrnithokrites(object):
             
             kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
             result_per_file = kiwi_finder.find_kiwi(kiwi_calls)
-            self.output_q.put((result_per_file, kiwi_calls, sample_name, filtered_sample, rate, segmented_sounds))
+            self.output_q.put((result_per_file, kiwi_calls, sample_name, filtered_sample, rate, 
+                               segmented_sounds, exception))
         self.output_q.put("STOP")
             
 

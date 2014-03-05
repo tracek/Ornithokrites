@@ -66,16 +66,9 @@ def add_signal(signal, frame, winsize, no ):
     end=start+winsize
     signal[start:end] = signal[start:end] + frame
     
-def reduce_noise(signal, noisy_signal, method, winsize=2**10, window=sp.hanning(2**10)):
+def reduce_noise(signal, noisy_signal, winsize=2**10, window=sp.hanning(2**10)):
     """ Reduce noise """
-    if method == 'SS' or method == 0:
-        method = SpectralSubtraction(winsize, window)    
-    elif method == 'MMSE_STSA' or method == 1:
-        method = MMSE_STSA(winsize, window)    
-    elif method == 'MMSE_LogSTSA' or method == 2:
-        method = MMSE_LogSTSA(winsize, window)
-    elif method == 'JointMap' or method == 3:
-        method = JointMap(winsize, window)        
+    method = SpectralSubtraction(winsize, window)    
     
     out = sp.zeros(len(signal),sp.float32)
     power = sig.welch(noisy_signal, window=window, return_onesided=False, scaling='spectrum')[1] * window.sum()**2
