@@ -25,7 +25,7 @@ class Reporter(object):
         Parameters
         ----------
         app_config : AppConfig
-            AppConfig namedtuple defined in configuration.py
+            AppConfig namedtuple defined in configuration.py.
         """
         self.start_time = time.time() # Log start up time
         
@@ -40,21 +40,29 @@ class Reporter(object):
         self.DevLog = self._create_logger('devlog.html', app_config.data_store)
         self._config = app_config
 
-    def _create_logger(self, name, path, stdout=False):
-        if not os.path.exists(path):
-            os.makedirs(path)
-        logger = logging.getLogger(name)
-        logger.setLevel(logging.INFO)
-        handler = logging.FileHandler(os.path.join(path, name),'w')
-        formatter = logging.Formatter('%(message)s <br/>')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.info('<!DOCTYPE html>')
-        if stdout:
-            logger.addHandler(logging.StreamHandler()) # for standard output (console)
-        return logger
-
-    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds):            
+    def write_results(self, kiwi_result, individual_calls, filename, audio, rate, segmented_sounds):
+        """
+        Write results to log files.
+        
+        Parameters
+        -----------
+        kiwi_result : string
+            Result of identification: Male, Female, Male and Female or None.
+        individual_calls : 1-d array of int
+            Result of identification of individual calls (0-None, 1-Female, 2-Male, 3-Male and Female).
+        filename : string
+            Path to the audio file.
+        audio : 1-d array
+            Monaural audio sample.
+        rate : int
+            Sample rate in Hz.
+        segmented_sounds : list of (int, int)
+            List of tuples defining start and end of each call
+        
+        Returns
+        -----------
+        Nothing
+        """
         self.Log.info('%s: %s' % (filename, kiwi_result))
         
         self.DevLog.info('<h2>%s</h2>' % kiwi_result)
@@ -92,6 +100,20 @@ class Reporter(object):
         self.DevLog.info('<hr>')
         
     def write_results_parallel(self, outq):
+        """
+        Write results from a queue to log files.
+        
+        Parameters
+        -----------
+        outq : multiprocessing.Queue
+            Queue from which results will be read. Content of the queue is the same as
+            explained for write_results method.
+        
+        Returns
+        ----------
+        Nothing
+        """
+        
         for works in range(self._config.no_processes):
             for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, ex in iter(outq.get, "STOP"):
                 self.Log.info('%s: %s' % (filename.replace('/var/www/results/',''), kiwi_result))
@@ -140,6 +162,7 @@ class Reporter(object):
         self.cleanup()
         
     def cleanup(self):
+        """ Print execution time, remove all handlers from logs and stop logging. """
         log = logging.getLogger('log.html')
         devlog = logging.getLogger('devlog.html')
         elapsed_time = time.strftime('%H:%M:%S', time.gmtime(time.time() - self.start_time))
@@ -149,6 +172,11 @@ class Reporter(object):
         logging.shutdown()
     
     def send_email(self):
+        """ 
+        Send e-mail to a user once execution is completed. Meant for the web interface. To work
+        requires credentials for a given e-mail account
+        """
+            
         email_credentials_location = os.path.join(self._config.program_directory, "reporting.config")
         if not os.path.isfile(email_credentials_location):
             self.Log.error('Missing file %s with credentials. Sending e-mail has failed')
@@ -185,5 +213,20 @@ class Reporter(object):
     def log_exception(self, exception, message=''):
         self.Log.info(message)
         self.Log.exception(exception)
+        
+
+    def _create_logger(self, name, path, stdout=False):
+        if not os.path.exists(path):
+            os.makedirs(path)
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+        handler = logging.FileHandler(os.path.join(path, name),'w')
+        formatter = logging.Formatter('%(message)s <br/>')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.info('<!DOCTYPE html>')
+        if stdout:
+            logger.addHandler(logging.StreamHandler()) # for standard output (console)
+        return logger        
         
     

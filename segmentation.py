@@ -9,7 +9,6 @@ Audio segmentation module.
 
 import numpy as np
 from aubio import onset
-from collections import OrderedDict
 
 class OnsetDetector(object):
     """ Wrapper class for Aubio onset detector class """
