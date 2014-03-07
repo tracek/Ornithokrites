@@ -159,16 +159,20 @@ class Reporter(object):
         
         if self._config.mail:
             self.send_email()
+        
+        elapsed_time = time.strftime('%H:%M:%S', time.gmtime(time.time() - self.start_time))
+        self.Log.info('Execution time: %s', elapsed_time)
+        
         self.cleanup()
         
     def cleanup(self):
         """ Print execution time, remove all handlers from logs and stop logging. """
         log = logging.getLogger('log.html')
         devlog = logging.getLogger('devlog.html')
-        elapsed_time = time.strftime('%H:%M:%S', time.gmtime(time.time() - self.start_time))
-        log.info('Execution time: %s', elapsed_time)    
-        log.handlers = []
-        devlog.handlers = []
+        if log.handlers:
+            log.handlers = []
+        if devlog.handlers:
+            devlog.handlers = []
         logging.shutdown()
     
     def send_email(self):
