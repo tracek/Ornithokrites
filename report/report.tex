@@ -145,7 +145,7 @@ As visualised in the confusion matrix \footnote{\url{http://en.wikipedia.org/wik
 
 Since the program was trained on 1-minute samples, it very well might be that many times longer recordings will require a bit different approach with respect to noise reduction - and thus prove more challenging to the algorithm; nothing that cannot be fixed with more training data.
 
-Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz.
+Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz. However, since the program features parallel computations, it can be made \textit{k}-times faster, where \textit{k} is the number of available cores. On the mentioned system with 4 cores processing of 209 files takes around 100 seconds.
 
 \section{Developer's notes}
 Following notes provide more technical information of little interest for the end user.
