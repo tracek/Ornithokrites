@@ -87,7 +87,7 @@ After providing the credentials, the user is directed to a simple web form that 
 
 \begin{figure}[hbtp]
 \label{fig:spectrogram}
-\caption{Example of spectrogram showing male and female kiwi}
+\caption{Spectrogram of a recording after noise-reduction step showing male (blue triangles) and female (green circles) kiwi calls. }
 \centering
 \includegraphics[scale=0.7]{spectrogram.png}
 \end{figure}
@@ -145,7 +145,7 @@ As visualised in the confusion matrix \footnote{\url{http://en.wikipedia.org/wik
 
 Since the program was trained on 1-minute samples, it very well might be that many times longer recordings will require a bit different approach with respect to noise reduction - and thus prove more challenging to the algorithm; nothing that cannot be fixed with more training data.
 
-Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz. However, since the program features parallel computations, it can be made \textit{k}-times faster, where \textit{k} is the number of available cores. On the mentioned system with 4 cores processing of 209 files takes around 100 seconds.
+Processing of a single, one-minute file takes roughly 2 seconds on a single core of Intel Core-i5 @ 3.40 GHz. However, since the program features parallel computations, it can be made \textit{k}-times faster, where \textit{k} is the number of available cores. On the mentioned system with 4 cores processing of 206 files takes around 100 seconds.
 
 \section{Developer's notes}
 Following notes provide more technical information of little interest for the end user.
@@ -155,7 +155,7 @@ Ornithokrites is written in Python 2.7, with all of its heavy-duty numerical com
 The Machine Learning algorithm used in this program, that is Support Vector Machine with Gaussian kernel, belongs to a class of supervised models. As a consequence, it requires labelled training set for fitting the model. At this moment 3318 fragments were classified as either male, female or not a kiwi. It is a manual task, with the labelling dependant on an individual proficiency in kiwi identification - and hence prone to errors.
 
 \section{Acknowledgments}
-I wish to thank Barry Polley for providing this utmost interesting challenge and his assistance along the way. My great appreciation also goes to Pat Miller of \url{birdingNZ.net} community that supplied me with invaluable help concerning kiwi identification; without his aid I would not be able to achieve such high accuracy.
+I wish to thank Barry Polley from Department of Conservation of New Zealand for providing this utmost interesting challenge and his assistance along the way. My great appreciation also goes to Pat Miller of \url{birdingNZ.net} community that supplied me with invaluable help concerning kiwi identification; without his aid I would not be able to achieve such high accuracy.
 
 \section{Contact information}
 My e-mail: \href{mailto:lukasz.tracewski@gmail.com}{lukasz.tracewski@gmail.com}
