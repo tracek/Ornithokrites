@@ -107,7 +107,7 @@ class RecordingsFetcher(object):
                 for filename in [f for f in filenames if f.endswith('.wav')]:
                     path = os.path.join(dirpath, filename)
                     (rate, sample) = wav.read(path)
-                    inq.put((rate, sample, path))
+                    inq.put((rate, sample.astype('float32'), path))
         else:  # Interactive mode - parallel processing on one file makes no sense ...
             root = Tkinter.Tk()
             root.withdraw()

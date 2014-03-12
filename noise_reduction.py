@@ -17,6 +17,7 @@ import noise_subtraction as ns
 class NoiseRemover(object):
 
     def remove_noise(self, signal, rate):
+        signal = remove_clicks(signal, rate, 2**10)
         # Apply highpass filter to greatly reduce signal strength below 1500 Hz.
         self.sample_highpassed = highpass_filter(signal, rate, 1500)
 
@@ -53,7 +54,7 @@ def select_best_segmentator(signal, rate):
 
     no_silence_intervals = segmentator.get_number_of_silence_intervals()
 
-    if no_silence_intervals < 1:
+    if no_silence_intervals < 2:
         segmentator = Segmentator(detector_type='energy', threshold=0.2)
         segmentator.process(signal, rate)
         no_silence_intervals = segmentator.get_number_of_silence_intervals()
@@ -69,25 +70,24 @@ def wiener_filter(signal):
 
 def remove_clicks(signal, rate, periodicity):
     """ Clicks are short bursts of energy. """
-    margin = 2**12
+    margin = 1.2 * rate
     period = 2**10
     overlap = period / 2.0
-    
-    energy = calculate_energy(signal, period, overlap)
-    energy = sig.medfilt(energy, 15)
-        
-    p = np.percentile(energy, 90)
-    condition = energy > 2*p
-    
     mask = np.ones(len(signal), dtype=bool)
 
-    cont = contiguous_regions(condition)
-    for start, stop in cont:
-        start_idx = start * period - margin    
-        stop_idx = stop * period + margin
-        mask[start_idx:stop_idx] = False  
-        print start_idx, stop_idx
-        
+    if np.abs(signal.max()) > 32760:
+        energy = calculate_energy(signal, period, overlap)
+        energy = sig.medfilt(energy, 15)
+
+        p = np.percentile(energy, 90)
+        condition = energy > 2*p
+
+        cont = contiguous_regions(condition)
+        for start, stop in cont:
+            start_idx = start * period - margin
+            stop_idx = stop * period + margin
+            mask[start_idx:stop_idx] = False
+
     return signal[mask]
 
 
@@ -96,28 +96,28 @@ def calculate_energy(signal, period, overlap=0):
 
     intervals = np.arange(0, len(signal), period)
     energy = np.zeros(len(intervals) - 1)
-    
+
     energy_slice_start = signal[intervals[0]:intervals[1] + overlap/2]
     energy[0] = sum(energy_slice_start**2)
-    
+
     energy_slice_end = signal[intervals[-2] - overlap/2:intervals[-1]]
     energy[-1] = sum(energy_slice_end**2)
-    
+
     for i in np.arange(1, len(intervals) - 2):
         energy_slice = signal[intervals[i] - overlap/2:intervals[i+1] + overlap/2]
         energy[i] = sum(energy_slice**2)
-    
+
     return energy
-    
-def contiguous_regions(condition):    
+
+def contiguous_regions(condition):
     d = np.diff(condition)  # Where the condition changes
     idx, = d.nonzero()  # Get the indices
     idx += 1  # We were lagging behind the condition
     if condition[0]:  # Handle border conditions
-        idx = np.r_[0, idx]  
+        idx = np.r_[0, idx]
     if condition[-1]:
         idx = np.r_[idx, condition.size]
-    idx.shape = (-1,2)    
+    idx.shape = (-1,2)
     return idx
 
 
