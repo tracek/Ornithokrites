@@ -17,9 +17,9 @@ import noise_subtraction as ns
 class NoiseRemover(object):
 
     def remove_noise(self, signal, rate):
-        signal = remove_clicks(signal, rate, 2**10)
+        signal = remove_clicks(signal, rate, window_size=2**10, margin=1.2)
         # Apply highpass filter to greatly reduce signal strength below 1500 Hz.
-        self.sample_highpassed = highpass_filter(signal, rate, 1500)
+        self.sample_highpassed = highpass_filter(signal, rate, cut=1500)
 
         self.segmentator = select_best_segmentator(self.sample_highpassed, rate)
         no_silence_intervals = self.segmentator.get_number_of_silence_intervals()
@@ -68,15 +68,32 @@ def wiener_filter(signal):
     return output
 
 
-def remove_clicks(signal, rate, periodicity):
-    """ Clicks are short bursts of energy. """
-    margin = 1.2 * rate
-    period = 2**10
-    overlap = period / 2.0
+def remove_clicks(signal, rate, window_size, margin):
+    """
+    Clicks are bursts of energy. The fucntion will calculate signal energy over given window
+    size and eliminate regions of abnormaly high energy content.
+    
+    Parameters
+    --------------
+    signal : 1d-array
+        Single-channel audio sample.
+    rate : int
+        Sample rate in Hz.
+    window_size : int
+        The number of data points used in each block for the energy calculation.
+    margin : float
+        How much (in seconds) the sample should be cut on both sides.
+    Returns
+    --------------
+    signal : 1d-array
+        Cleared signal.
+    """
+    margin = margin * rate
+    overlap = window_size / 2.0
     mask = np.ones(len(signal), dtype=bool)
 
-    if np.abs(signal.max()) > 32760:
-        energy = calculate_energy(signal, period, overlap)
+    if np.abs(signal.max()) > 2**14:
+        energy = calculate_energy(signal, window_size, overlap)
         energy = sig.medfilt(energy, 15)
 
         p = np.percentile(energy, 90)
@@ -84,8 +101,8 @@ def remove_clicks(signal, rate, periodicity):
 
         cont = contiguous_regions(condition)
         for start, stop in cont:
-            start_idx = start * period - margin
-            stop_idx = stop * period + margin
+            start_idx = start * window_size - margin
+            stop_idx = stop * window_size + margin
             mask[start_idx:stop_idx] = False
 
     return signal[mask]

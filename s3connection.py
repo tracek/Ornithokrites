@@ -53,19 +53,19 @@ class RecordingsFetcher(object):
                     _make_sure_dir_exists(path)
                     key.get_contents_to_filename(path)  # Download the file
                     (rate, sample) = wav.read(path)
-                    yield rate, sample, path
+                    yield rate, sample.astype('float32'), path
         elif data_store:  # Get locally stored data
             for dirpath, dirnames, filenames in os.walk(data_store):
                 for filename in [f for f in filenames if f.endswith('.wav')]:
                     path = os.path.join(dirpath, filename)
                     (rate, sample) = wav.read(path)
-                    yield rate, sample, path
+                    yield rate, sample.astype('float32'), path
         else:  # Interactive mode - let user select a signle file
             root = Tkinter.Tk()
             root.withdraw()
             filename = tkFileDialog.askopenfilename()
             (rate, sample) = wav.read(path)
-            yield rate, sample, path
+            yield rate, sample.astype('float32'), path
 
     def get_recordings(self, app_config, inq):
         """
@@ -101,7 +101,7 @@ class RecordingsFetcher(object):
                     _make_sure_dir_exists(path)
                     key.get_contents_to_filename(path)  # Download the file
                     (rate, sample) = wav.read(path)
-                    inq.put((rate, sample, path))
+                    inq.put((rate, sample.astype('float32'), path))
         elif app_config.data_store:  # Get locally stored data
             for dirpath, dirnames, filenames in os.walk(app_config.data_store):
                 for filename in [f for f in filenames if f.endswith('.wav')]:
@@ -113,7 +113,7 @@ class RecordingsFetcher(object):
             root.withdraw()
             filename = tkFileDialog.askopenfilename()
             (rate, sample) = wav.read(path)
-            inq.put((rate, sample, path))
+            inq.put((rate, sample.astype('float32'), path))
 
         for i in range(app_config.no_processes):
             inq.put("STOP")
