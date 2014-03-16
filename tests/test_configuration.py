@@ -25,7 +25,7 @@ class test_configuration(object):
         
     def test_user_provided_bucket(self):
         bucket_name = 'mybucket'
-        web_store =  '/var/www/results/Recordings/'
+        web_store =  '/var/www/results/'
         sys.argv = [__file__, '-b' + bucket_name]
         configurator = Configurator()
         app_config = configurator.parse_arguments()
