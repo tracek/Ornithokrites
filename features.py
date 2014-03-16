@@ -142,12 +142,12 @@ class FeatureExtractor(object):
         else:
             plt.show()
 
-    def plot_extracted_features(self, file_name=''):
+    def plot_extracted_features(self, features, file_name=''):
         plt.figure(figsize=(30, 60))
-        no_features = np.shape(self.ExtractedFeatures)[1]
+        no_features = np.shape(features)[1]
         for column in np.arange(no_features):
             ax = plt.subplot(7, 5, column + 1)
-            plt.plot(self.ExtractedFeatures[:, column])
+            plt.plot(features[:, column])
             plt.title(self.ExtractedFeaturesList[column])
             ax.set_xticks([])
         if file_name:
@@ -156,11 +156,11 @@ class FeatureExtractor(object):
         else:
             plt.show()
 
-    def write_extracted_features_to_csv(self, file_name):
+    def write_features_to_csv(self, features, file_name):
         csv_header = ','.join(itertools.chain(self.ExtractedFeaturesList)) + '\n'
-        np.savetxt(file_name + '.csv', self.ExtractedFeatures, delimiter=',', header=csv_header)
+        np.savetxt(file_name + '.csv', features, delimiter=',', header=csv_header)
 
-    def read_extracted_features_from_csv(self, file_name):
+    def read_features_from_csv(self, file_name):
         return np.loadtxt(file_name, delimiter=',')
 
     def read_target(self, file_name):
