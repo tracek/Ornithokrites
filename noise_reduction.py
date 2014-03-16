@@ -21,13 +21,13 @@ class NoiseRemover(object):
         # Apply highpass filter to greatly reduce signal strength below 1500 Hz.
         self.sample_highpassed = highpass_filter(signal, rate, cut=1500)
 
-        self.segmentator = select_best_segmentator(self.sample_highpassed, rate)
+        self.segmentator = select_best_segmentator(self.sample_highpassed, rate, detector='energy')
         no_silence_intervals = self.segmentator.get_number_of_silence_intervals()
 
         out = signal
 
         if no_silence_intervals == 0:
-            raise ValueError('Could not find any silence intervals')
+            return self.sample_highpassed
         elif no_silence_intervals == 1:
             # Perform spectral subtraction on sample (not high-passed!)
             noise = self.segmentator.get_next_silence(signal)  # Get silence period
@@ -44,10 +44,10 @@ class NoiseRemover(object):
         return out
 
 
-def select_best_segmentator(signal, rate):
+def select_best_segmentator(signal, rate, detector):
     # Segmentator divides a track into segments containing sound features (non-noise)
     # and silence (noise)
-    segmentator = Segmentator(detector_type='energy', threshold=0.01)
+    segmentator = Segmentator(detector_type=detector, threshold=0.01)
 
     # Perform segmentation on high-passed sample
     segmentator.process(signal, rate)
@@ -55,9 +55,8 @@ def select_best_segmentator(signal, rate):
     no_silence_intervals = segmentator.get_number_of_silence_intervals()
 
     if no_silence_intervals < 2:
-        segmentator = Segmentator(detector_type='energy', threshold=0.2)
+        segmentator = Segmentator(detector_type=detector, threshold=0.2)
         segmentator.process(signal, rate)
-        no_silence_intervals = segmentator.get_number_of_silence_intervals()
 
     return segmentator
 
@@ -72,7 +71,7 @@ def remove_clicks(signal, rate, window_size, margin):
     """
     Clicks are bursts of energy. The fucntion will calculate signal energy over given window
     size and eliminate regions of abnormaly high energy content.
-    
+
     Parameters
     --------------
     signal : 1d-array
@@ -126,6 +125,7 @@ def calculate_energy(signal, period, overlap=0):
 
     return energy
 
+
 def contiguous_regions(condition):
     d = np.diff(condition)  # Where the condition changes
     idx, = d.nonzero()  # Get the indices
@@ -134,7 +134,7 @@ def contiguous_regions(condition):
         idx = np.r_[0, idx]
     if condition[-1]:
         idx = np.r_[idx, condition.size]
-    idx.shape = (-1,2)
+    idx.shape = (-1, 2)
     return idx
 
 

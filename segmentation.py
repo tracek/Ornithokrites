@@ -156,6 +156,8 @@ class Segmentator(object):
         # A - length of the interval
         # (X, Y) - tuple with start and end of the interval
         self._silence_intervals = []
+        # Segments with detected signal (non-noise)
+        self.Sounds = []
         # Calculate onsets
         self._onsets = self._onset_detector.calculate_onsets(sample, sample_rate)
         if (self._onsets):
@@ -165,9 +167,6 @@ class Segmentator(object):
             # Convert length in seconds to length in samples
             desired_length = sample_rate * self._desired_length_s
             delay = sample_rate * self._delay_s
-
-            # Segments with detected signal (non-noise)
-            self._sounds = []
 
             # Perform segmentation
             silence_min = 4 * sample_rate  # Minimal accepted silence length
@@ -179,20 +178,20 @@ class Segmentator(object):
                     end_silence = next_onset - sample_rate   # Safety margin
                     self._silence_intervals.append((end_silence - start_silence, (start_silence, end_silence)))
                 # Compute sounds intervals
-                minimal_sound_length = 0.1 * sample_rate  # 0.1s
+                minimal_sound_length = 0.25 * sample_rate
                 start_sound = max(0.0, onset - delay)
                 if distance_next_onset < desired_length:
                     end_sound = onset + distance_next_onset
                 else:
                     end_sound = onset + desired_length
                 if end_sound > start_sound + minimal_sound_length:
-                    self._sounds.append((start_sound, end_sound))
+                    self.Sounds.append((start_sound, end_sound))
 
             # Add last onset to sounds
             if self._onsets[-1] + desired_length > len(sample):
-                self._sounds.append((self._onsets[-1] - delay, len(sample) - 1))
+                self.Sounds.append((self._onsets[-1] - delay, len(sample) - 1))
             else:
-                self._sounds.append((self._onsets[-1] - delay, self._onsets[-1] + desired_length))
+                self.Sounds.append((self._onsets[-1] - delay, self._onsets[-1] + desired_length))
 
             # Add starting and closing intervals to silence
             silence_min_start = 2 * sample_rate
@@ -229,10 +228,6 @@ class Segmentator(object):
     def get_onsets(self):
         """ Return previously computed onsets """
         return self._onsets
-
-    def get_segmented_sounds(self):
-        """ Return previously computed sounds (i.e. non-noise signal) """
-        return self._sounds
 
     def get_next_silence(self, sample):
         """ Silence intervals are sorted from longest to shortest

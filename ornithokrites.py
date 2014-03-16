@@ -32,21 +32,17 @@ class Ornithokrites(object):
     def run(self):
         for rate, sample, sample_name in self.fetcher.get_next_recording(data_store=app_config.data_store,
                                                                          bucket_name=app_config.bucket):
-            try:
-                filtered_sample = self.noise_remover.remove_noise(sample, rate)
-            except Exception, e:  # All sorts of bad things can happen during noise removal
-                filtered_sample = sample
-                self.reporter.log_exception(e, 'Error while performing noise reduction')
 
-            segmented_sounds = self.noise_remover.segmentator.get_segmented_sounds()
+            filtered_sample = self.noise_remover.remove_noise(sample, rate)
+            segmented_sounds = self.noise_remover.segmentator.Sounds
+            if segmented_sounds:
+                feature_extractor = features.FeatureExtractor(app_config, rate)
+                extracted_features = feature_extractor.process(filtered_sample, segmented_sounds)
 
-            feature_extractor = features.FeatureExtractor(app_config, rate)
-            extracted_features = feature_extractor.process(filtered_sample, segmented_sounds)
-
-            kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
-            result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
-            self.reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample,
-                                        rate, segmented_sounds)
+                kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
+                result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
+                self.reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample,
+                                            rate, segmented_sounds)
         self.reporter.cleanup()
 
 
@@ -87,16 +83,14 @@ class ParallelOrnithokrites(object):
             exception = None
             try:
                 filtered_sample = noise_remover.remove_noise(sample, rate)
-            except Exception, e:
-                filtered_sample = sample
-                exception = e
+                segmented_sounds = noise_remover.segmentator.Sounds
+                feature_extractor = features.FeatureExtractor(self.app_config, rate)
+                extracted_features = feature_extractor.process(signal=filtered_sample, segments=segmented_sounds)
 
-            segmented_sounds = noise_remover.segmentator.get_segmented_sounds()
-            feature_extractor = features.FeatureExtractor(self.app_config, rate)
-            extracted_features = feature_extractor.process(signal=filtered_sample, segments=segmented_sounds)
-
-            kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
-            result_per_file = kiwi_finder.find_kiwi(kiwi_calls)
+                kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
+                result_per_file = kiwi_finder.find_kiwi(kiwi_calls)
+            except Exception, ex:
+                exception = ex
             self.output_q.put((result_per_file, kiwi_calls, sample_name, filtered_sample, rate,
                                segmented_sounds, exception))
         self.output_q.put("STOP")

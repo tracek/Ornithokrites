@@ -7,6 +7,7 @@ Created on Sat Feb 22 18:05:56 2014
 Reporting module
 """
 
+from __future__ import division
 import os
 import sys
 import logging
@@ -117,49 +118,49 @@ class Reporter(object):
         for works in range(self._config.no_processes):
             for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, ex in iter(outq.get, "STOP"):
 
-                if '/var/www/' in filename:
-                    short_name = filename.replace('/var/www/results/', '')
-                    full_path = filename.replace('/var/www/', '')
-                else:
-                    short_name = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]
-                    full_path = short_name
-
-                self.Log.info('%s: %s' % (short_name, kiwi_result))
-
                 if ex:
-                    #self.Log.exception('Problem encountered during noise reduction: %s', ex.message)
                     self.DevLog.exception(ex)
-
-                self.DevLog.info('<h2>%s</h2>' % short_name)
-                self.DevLog.info('<h2>%s</h2>' % kiwi_result)
-
-                if self._config.delete_data:
-                    os.remove(filename)
+                    print ex
                 else:
-                    self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', full_path)
+                    if '/var/www/' in filename:
+                        short_name = filename.replace('/var/www/results/', '')
+                        full_path = filename.replace('/var/www/', '')
+                    else:
+                        short_name = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]
+                        full_path = short_name
 
-                if self._config.with_spectrogram:
-                    # Plot spectrogram
-                    plt.ioff()
-                    plt.specgram(audio, NFFT=2**11, Fs=rate)
-                    # and mark on it with vertical lines found audio features
-                    for i, (start, end) in enumerate(segmented_sounds):
-                        start /= rate
-                        end /= rate
-                        plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2, ls='dashed')
-                        plt.plot([end, end], [0, 4000], lw=1, c='g', alpha=0.4)
-                        plt.text(start, 4000, i, fontsize=8)
-                        if individual_calls[i] == 1:
-                            plt.plot((start + end) / 2, 3500, 'go')
-                        elif individual_calls[i] == 2:
-                            plt.plot((start + end) / 2, 3500, 'bv')
-                    plt.axis('tight')
-                    title = plt.title(kiwi_result)
-                    title.set_y(1.03)
-                    spectrogram_sample_name = filename + '.png'
-                    plt.savefig(spectrogram_sample_name)
-                    plt.clf()
-                    self.DevLog.info('<img src="%s" alt="Spectrogram">', full_path + '.png')
+                    self.Log.info('%s: %s' % (short_name, kiwi_result))
+
+                    self.DevLog.info('<h2>%s</h2>' % short_name)
+                    self.DevLog.info('<h2>%s</h2>' % kiwi_result)
+
+                    if self._config.delete_data:
+                        os.remove(filename)
+                    else:
+                        self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', full_path)
+
+                    if self._config.with_spectrogram:
+                        # Plot spectrogram
+                        plt.ioff()
+                        plt.specgram(audio, NFFT=2**11, Fs=rate)
+                        # and mark on it with vertical lines found audio features
+                        for i, (start, end) in enumerate(segmented_sounds):
+                            start /= rate
+                            end /= rate
+                            plt.plot([start, start], [0, 4000], lw=1, c='k', alpha=0.2, ls='dashed')
+                            plt.plot([end, end], [0, 4000], lw=1, c='g', alpha=0.4)
+                            plt.text(start, 4000, i, fontsize=8)
+                            if individual_calls[i] == 1:
+                                plt.plot((start + end) / 2, 3500, 'go')
+                            elif individual_calls[i] == 2:
+                                plt.plot((start + end) / 2, 3500, 'bv')
+                        plt.axis('tight')
+                        title = plt.title(kiwi_result)
+                        title.set_y(1.03)
+                        spectrogram_sample_name = filename + '.png'
+                        plt.savefig(spectrogram_sample_name)
+                        plt.clf()
+                        self.DevLog.info('<img src="%s" alt="Spectrogram">', full_path + '.png')
 
                 self.DevLog.info('<hr>')
 
