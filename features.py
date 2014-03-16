@@ -62,8 +62,8 @@ class FeatureExtractor(object):
         SpectralRolloff = self.Features['SpectralRolloff']
 
         for i, segment in enumerate(segments):
-            start = int(segment[0] / frame_overlap) - 1
-            end = int(segment[1] / frame_overlap) + 1
+            start = int(segment[0] / frame_overlap)
+            end = int(segment[1] / frame_overlap)
 
             self.ExtractedFeatures[i, 0] = LPC1[start:end].mean()
             self.ExtractedFeatures[i, 1] = LSF7[start:end].min()

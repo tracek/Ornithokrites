@@ -116,20 +116,27 @@ class Reporter(object):
 
         for works in range(self._config.no_processes):
             for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, ex in iter(outq.get, "STOP"):
-                self.Log.info('%s: %s' % (filename.replace('/var/www/results/', ''), kiwi_result))
+
+                if '/var/www/' in filename:
+                    short_name = filename.replace('/var/www/results/', '')
+                    full_path = filename.replace('/var/www/', '')
+                else:
+                    short_name = filename.replace(os.path.split(os.path.dirname(filename))[0], '')[1:]
+                    full_path = short_name
+
+                self.Log.info('%s: %s' % (short_name, kiwi_result))
 
                 if ex:
-                    self.Log.exception('Problem encountered during noise reduction: %s', ex.message)
+                    #self.Log.exception('Problem encountered during noise reduction: %s', ex.message)
                     self.DevLog.exception(ex)
 
+                self.DevLog.info('<h2>%s</h2>' % short_name)
                 self.DevLog.info('<h2>%s</h2>' % kiwi_result)
-                self.DevLog.info('<h2>%s</h2>' % filename.replace('/var/www/results/', ''))
 
                 if self._config.delete_data:
                     os.remove(filename)
                 else:
-                    self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>',
-                                     filename.replace('/var/www/', ''))
+                    self.DevLog.info('<audio controls><source src="%s" type="audio/wav"></audio>', full_path)
 
                 if self._config.with_spectrogram:
                     # Plot spectrogram
@@ -152,8 +159,7 @@ class Reporter(object):
                     spectrogram_sample_name = filename + '.png'
                     plt.savefig(spectrogram_sample_name)
                     plt.clf()
-                    path = spectrogram_sample_name.replace('/var/www/', '')
-                    self.DevLog.info('<img src="%s" alt="Spectrogram">', path)
+                    self.DevLog.info('<img src="%s" alt="Spectrogram">', full_path + '.png')
 
                 self.DevLog.info('<hr>')
 

@@ -179,12 +179,14 @@ class Segmentator(object):
                     end_silence = next_onset - sample_rate   # Safety margin
                     self._silence_intervals.append((end_silence - start_silence, (start_silence, end_silence)))
                 # Compute sounds intervals
-                start_sound = onset - delay
+                minimal_sound_length = 0.1 * sample_rate  # 0.1s
+                start_sound = max(0.0, onset - delay)
                 if distance_next_onset < desired_length:
                     end_sound = onset + distance_next_onset
                 else:
                     end_sound = onset + desired_length
-                self._sounds.append((start_sound, end_sound))
+                if end_sound > start_sound + minimal_sound_length:
+                    self._sounds.append((start_sound, end_sound))
 
             # Add last onset to sounds
             if self._onsets[-1] + desired_length > len(sample):
