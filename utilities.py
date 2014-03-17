@@ -5,7 +5,7 @@ Created on Sun Mar 16 21:41:18 2014
 @author: Lukasz Tracewski
 """
 
-import np
+import numpy as np
 
 
 def contiguous_regions(condition):
@@ -18,3 +18,4 @@ def contiguous_regions(condition):
         idx = np.r_[idx, condition.size]
     idx.shape = (-1, 2)
     return idx
+
