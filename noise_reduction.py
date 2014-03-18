@@ -11,7 +11,8 @@ from scipy.signal import firwin, butter, lfilter, kaiserord, wiener
 import scipy.signal as sig
 import numpy as np
 from segmentation import Segmentator
-import noise_subtraction as ns
+from noise_subtraction import reduce_noise
+from utilities import contiguous_regions
 
 
 class NoiseRemover(object):
@@ -31,12 +32,12 @@ class NoiseRemover(object):
         elif no_silence_intervals == 1:
             # Perform spectral subtraction on sample (not high-passed!)
             noise = self.segmentator.get_next_silence(signal)  # Get silence period
-            out = ns.reduce_noise(signal, noise)  # Perform spectral subtraction
+            out = reduce_noise(signal, noise)  # Perform spectral subtraction
         else:
             noise = self.segmentator.get_next_silence(signal)  # Get silence period
-            out = ns.reduce_noise(signal, noise)  # Perform spectral subtraction
+            out = reduce_noise(signal, noise)  # Perform spectral subtraction
             noise = self.segmentator.get_next_silence(signal)  # Try again
-            out = ns.reduce_noise(out, noise)  # Perform spectral subtraction
+            out = reduce_noise(out, noise)  # Perform spectral subtraction
 
         # Apply high-pass filter on spectral-subtracted sample
         out = highpass_filter(out, rate, 1500)
@@ -124,18 +125,6 @@ def calculate_energy(signal, period, overlap=0):
         energy[i] = sum(energy_slice**2)
 
     return energy
-
-
-def contiguous_regions(condition):
-    d = np.diff(condition)  # Where the condition changes
-    idx, = d.nonzero()  # Get the indices
-    idx += 1  # We were lagging behind the condition
-    if condition[0]:  # Handle border conditions
-        idx = np.r_[0, idx]
-    if condition[-1]:
-        idx = np.r_[idx, condition.size]
-    idx.shape = (-1, 2)
-    return idx
 
 
 def highpass_filter(signal, rate, cut):

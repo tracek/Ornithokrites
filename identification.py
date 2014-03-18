@@ -10,6 +10,10 @@ Module for identification of kiwi calls
 import os
 import pickle
 import numpy as np
+from collections import namedtuple
+from utilities import contiguous_regions
+
+Candidate = namedtuple('Candidate','start end density')
 
 
 class KiwiFinder(object):
@@ -67,3 +71,16 @@ class KiwiFinder(object):
             # if None were found relax the condition for number of consecutive calls
             result = self._look_for_consecutive_calls(individual_calls, 3)
         return result
+        
+    def find_candidates(condition, segments, rate, min_ind_call, min_calls_density):
+        candidates = []    
+        result = contiguous_regions(condition)
+        for start, end in result:
+            length = end - start
+            if length >= min_ind_call:
+                region_start = segments[start][0]
+                region_end = segments[start + length - 1][1]
+                calls_density = (rate * length) / (region_end - region_start)
+                if calls_density > min_calls_density:
+                    candidates.append(Candidate(region_start, region_end, calls_density))
+        return candidates
