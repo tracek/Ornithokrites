@@ -28,6 +28,7 @@ class KiwiFinder(object):
             self._scaler = pickle.load(scaler_loader)
         self.KiwiCounts = {'Male': 0, 'Female': 0, 'Male and Female': 0, 'None': 0}
 
+
     def _look_for_consecutive_calls(self, P, no_consecutive_calls=4):
         """ The most prominent feature of kiwi calls is their repetitive character - use it """
         kiwi = np.zeros(3, dtype='int')
@@ -71,9 +72,9 @@ class KiwiFinder(object):
             # if None were found relax the condition for number of consecutive calls
             result = self._look_for_consecutive_calls(individual_calls, 3)
         return result
-        
-    def find_candidates(condition, segments, rate, min_ind_call, min_calls_density):
-        candidates = []    
+
+    def find_candidates(self, condition, segments, rate, min_ind_call, min_calls_density):
+        candidates = []
         result = contiguous_regions(condition)
         for start, end in result:
             length = end - start
@@ -83,4 +84,30 @@ class KiwiFinder(object):
                 calls_density = (rate * length) / (region_end - region_start)
                 if calls_density > min_calls_density:
                     candidates.append(Candidate(region_start, region_end, calls_density))
+                else:
+                    for i in np.arange(length - min_ind_call):
+                        region_start = i
+                        region_end = i + min_ind_call
+                        calls_density = (rate * length) / (region_end - region_start)
+                        if calls_density > min_calls_density:
+                            candidates.append(Candidate(region_start, region_end, calls_density))
         return candidates
+
+    def find_kiwi2(self, individual_calls, condition, segments, rate):
+        min_calls_density = 0.5
+        min_no_ind_calls = 4
+        min_no_border_calls = 3
+        females = []
+        males = []
+        females += self.find_candidates(individual_calls == 1, condition, segments, rate, min_no_ind_calls, min_calls_density)
+        females += self.find_candidates(individual_calls[0:min_no_border_calls] == 1, condition, segments, rate, min_no_border_calls, min_calls_density)
+        females += self.find_candidates(individual_calls[-min_no_border_calls:] == 1, condition, segments, rate, min_no_border_calls, min_calls_density)
+        males += self.find_candidates(individual_calls == 2, condition, segments, rate, min_no_ind_calls, min_calls_density)
+        males += self.find_candidates(individual_calls[0:min_no_border_calls] == 2, condition, segments, rate, min_no_border_calls, min_calls_density)
+        males += self.find_candidates(individual_calls[-min_no_border_calls:] == 2, condition, segments, rate, min_no_border_calls, min_calls_density)
+
+#    def find_kiwi_gender(self, gender, individual_calls, condition, segments, rate, )
+#    def find_candidate(region_start, region_end, rate):
+#        calls_density = (rate * length) / (region_end - region_start)
+#        if calls_density > min_calls_density:
+#            return Candidate(region_start, region_end, calls_density)
