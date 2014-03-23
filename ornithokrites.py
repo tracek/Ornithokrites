@@ -40,7 +40,7 @@ class Ornithokrites(object):
                 extracted_features = feature_extractor.process(filtered_sample, segmented_sounds)
 
                 kiwi_calls = self.kiwi_finder.find_individual_calls(extracted_features)
-                result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls)
+                result_per_file = self.kiwi_finder.find_kiwi(kiwi_calls, segmented_sounds, rate)
                 self.reporter.write_results(result_per_file, kiwi_calls, sample_name, filtered_sample,
                                             rate, segmented_sounds)
         self.reporter.cleanup()
@@ -86,11 +86,12 @@ class ParallelOrnithokrites(object):
                 segmented_sounds = noise_remover.segmentator.Sounds
                 feature_extractor = features.FeatureExtractor(self.app_config, rate)
                 extracted_features = feature_extractor.process(signal=filtered_sample, segments=segmented_sounds)
-
                 kiwi_calls = kiwi_finder.find_individual_calls(extracted_features)
-                result_per_file = kiwi_finder.find_kiwi(kiwi_calls)
+                result_per_file = kiwi_finder.find_kiwi(kiwi_calls, segmented_sounds, rate)
             except Exception, ex:
                 exception = ex
+                print ex
+                print sample_name
             self.output_q.put((result_per_file, kiwi_calls, sample_name, filtered_sample, rate,
                                segmented_sounds, exception))
         self.output_q.put("STOP")

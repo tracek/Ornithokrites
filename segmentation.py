@@ -63,6 +63,8 @@ class OnsetDetector(object):
         # Configure onsets' detector
         onset_detector = onset(self._type, self._window_size, self._hop_size, sample_rate)
         onset_detector.set_threshold(self._threshold)
+        onset_detector.set_minioi_s(0.5)
+        # onset_detector.set_delay_s(1.0)
 
         # Calculate onsets
         onsets = []
@@ -71,9 +73,9 @@ class OnsetDetector(object):
             if onset_detector(frame.astype('float32')):
                 onsets.append(onset_detector.get_last())
 
-        # Discard artifact - somehow always onset is detected at zero
-        if (len(onsets) > 0 and onsets[0] == 0):
-            onsets.pop(0)
+        early_onsets = [value for value in onsets if value > sample_rate * 0.5 and value < 2 * sample_rate]
+        if not early_onsets:
+            onsets = [value for value in onsets if value > self._window_size]
 
         return onsets
 
@@ -86,7 +88,7 @@ class Segmentator(object):
     provided input.
     """
 
-    def __init__(self, desired_length=0.8, delay=0.2,
+    def __init__(self, desired_length=0.8, delay=0.3,
                  window_size=2**11, detector_type='energy', threshold=0.01):
         """
         Available methods for detecting onsets are:
@@ -169,7 +171,7 @@ class Segmentator(object):
             delay = sample_rate * self._delay_s
 
             # Perform segmentation
-            silence_min = 4 * sample_rate  # Minimal accepted silence length
+            silence_min = 4.0 * sample_rate  # Minimal accepted silence length
             for onset, next_onset in zip(self._onsets, self._onsets[1:]):
                 distance_next_onset = next_onset - onset
                 # Compute silence intervals

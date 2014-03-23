@@ -117,7 +117,6 @@ class Reporter(object):
 
         for works in range(self._config.no_processes):
             for kiwi_result, individual_calls, filename, audio, rate, segmented_sounds, ex in iter(outq.get, "STOP"):
-
                 if ex:
                     self.DevLog.exception(ex)
                     print ex
