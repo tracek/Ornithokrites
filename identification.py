@@ -12,6 +12,8 @@ import pickle
 import numpy as np
 from collections import namedtuple
 from utilities import contiguous_regions
+from sklearn import preprocessing
+from sklearn import svm
 
 Candidate = namedtuple('Candidate', 'start end')
 
