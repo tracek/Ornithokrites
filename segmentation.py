@@ -171,7 +171,7 @@ class Segmentator(object):
             delay = sample_rate * self._delay_s
 
             # Perform segmentation
-            silence_min = 4.0 * sample_rate  # Minimal accepted silence length
+            silence_min = 3.2 * sample_rate  # Minimal accepted silence length
             for onset, next_onset in zip(self._onsets, self._onsets[1:]):
                 distance_next_onset = next_onset - onset
                 # Compute silence intervals

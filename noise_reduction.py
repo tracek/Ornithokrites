@@ -101,8 +101,8 @@ def remove_clicks(signal, rate, window_size, margin):
 
         cont = contiguous_regions(condition)
         for start, stop in cont:
-            start_idx = start * window_size - margin
-            stop_idx = stop * window_size + margin
+            start_idx = int(start * window_size - margin)
+            stop_idx = int(stop * window_size + margin)
             mask[start_idx:stop_idx] = False
 
     return signal[mask]
@@ -111,17 +111,18 @@ def remove_clicks(signal, rate, window_size, margin):
 def calculate_energy(signal, period, overlap=0):
     """ Calculate energy of the signal. """
 
+    half_overlap = int(overlap/2)
     intervals = np.arange(0, len(signal), period)
     energy = np.zeros(len(intervals) - 1)
 
-    energy_slice_start = signal[intervals[0]:intervals[1] + overlap/2]
+    energy_slice_start = signal[intervals[0]:intervals[1] + half_overlap]
     energy[0] = sum(energy_slice_start**2)
 
-    energy_slice_end = signal[intervals[-2] - overlap/2:intervals[-1]]
+    energy_slice_end = signal[intervals[-2] - half_overlap:intervals[-1]]
     energy[-1] = sum(energy_slice_end**2)
 
     for i in np.arange(1, len(intervals) - 2):
-        energy_slice = signal[intervals[i] - overlap/2:intervals[i+1] + overlap/2]
+        energy_slice = signal[intervals[i] - half_overlap:intervals[i+1] + half_overlap]
         energy[i] = sum(energy_slice**2)
 
     return energy
