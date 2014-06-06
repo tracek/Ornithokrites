@@ -64,3 +64,8 @@ nosetests.xml
 # Project-specific files
 reporting.config
 *_exp.py
+
+# Directories
+experimental/
+model/
+tests/
