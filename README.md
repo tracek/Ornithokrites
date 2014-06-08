@@ -57,10 +57,10 @@ Dependencies
 Following libraries are used by Ornithokrites:
 - [Aubio 4.0](http://aubio.org/) - a great tool designed for the extraction of annotations from audio signals.
 - [Yaafe 0.64](http://yaafe.sourceforge.net/) - an audio features extraction toolbox with load of features to choose from.
-- [scikit-learn](http://scikit-learn.org/) - powerful Machine Learning library.
-- [NumPy](http://www.numpy.org/), [SciPy](http://www.scipy.org/) - canonical Python numerical libraries.
-- [matplotlib](http://matplotlib.org/) - plotting spectrograms.
-- [boto](https://github.com/boto/boto) - connection with Amazon Web Services.
+- [scikit-learn 0.14.1](http://scikit-learn.org/) - powerful Machine Learning library.
+- [NumPy 1.8.1](http://www.numpy.org/), [SciPy 0.13.3](http://www.scipy.org/) - canonical Python numerical libraries.
+- [matplotlib 1.3.1](http://matplotlib.org/) - plotting spectrograms.
+- [boto 2.22.0](https://github.com/boto/boto) - connection with Amazon Web Services.
 
 Acknowledgements
 =============
