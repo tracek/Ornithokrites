@@ -66,6 +66,9 @@ sudo patch /etc/environment <<EOF
 +YAAFE_PATH="/usr/local/yaafe_extensions"
 EOF
 
+# Reload the list of system-wide library paths
+sudo ldconfig
+
 ###################
 # Grab some Kiwis! (10 random)
 ###################
