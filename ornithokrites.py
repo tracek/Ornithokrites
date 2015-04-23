@@ -90,8 +90,6 @@ class ParallelOrnithokrites(object):
                 result_per_file = kiwi_finder.find_kiwi(kiwi_calls, segmented_sounds, rate)
             except Exception, ex:
                 exception = ex
-                print ex
-                print sample_name
             self.output_q.put((result_per_file, kiwi_calls, sample_name, filtered_sample, rate,
                                segmented_sounds, exception))
         self.output_q.put("STOP")
